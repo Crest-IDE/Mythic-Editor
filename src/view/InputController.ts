@@ -18,6 +18,7 @@ export interface IInputEvents {
   onEnter: () => void;
   onTab: () => void;
   onArrow: (direction: 'left' | 'right' | 'up' | 'down', expandSelection: boolean) => void;
+  onSave?: () => void;
 }
 
 export class InputController {
@@ -37,11 +38,17 @@ export class InputController {
     this.textArea.setAttribute('autocapitalize', 'off');
     this.textArea.setAttribute('spellcheck', 'false');
     this.textArea.setAttribute('tabindex', '0');
+    this.textArea.setAttribute('inputmode', 'text');
+    this.textArea.setAttribute('wrap', 'off');
+    this.textArea.setAttribute('rows', '1');
 
     this.bindEvents();
   }
 
   focus(): void {
+    this.textArea.readOnly = false;
+    this.textArea.removeAttribute('readonly');
+    this.textArea.setAttribute('inputmode', 'text');
     try {
       this.textArea.focus({ preventScroll: true });
     } catch (_) {
@@ -56,6 +63,19 @@ export class InputController {
     }
   }
 
+  blur(): void {
+    this.textArea.readOnly = true;
+    this.textArea.setAttribute('inputmode', 'none');
+    try {
+      this.textArea.blur();
+    } catch (_) {}
+    if (typeof (window as unknown as { CrestAndroidBridge?: { hideKeyboard: () => void } }).CrestAndroidBridge?.hideKeyboard === 'function') {
+      try {
+        (window as unknown as { CrestAndroidBridge: { hideKeyboard: () => void } }).CrestAndroidBridge.hideKeyboard();
+      } catch (_) {}
+    }
+  }
+
   updatePosition(cursorPosition: Position): void {
     const top = this.viewport.getLineTop(cursorPosition.lineNumber);
     const left = this.viewport.getColumnLeft(cursorPosition.column);
@@ -65,6 +85,12 @@ export class InputController {
   private bindEvents(): void {
     // Keyboard events
     this.textArea.addEventListener('keydown', (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        this.events.onSave?.();
+        return;
+      }
+
       if (this.isComposing) return;
 
       switch (e.key) {

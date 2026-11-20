@@ -22,6 +22,8 @@ export interface IEditorOptions {
   fontSize?: number;
   fontFamily?: string;
   lineHeight?: number;
+  onDidChangeContent?: (buffer: ITextBuffer) => void;
+  onSave?: (content: string) => void;
 }
 
 export class EditorView {
@@ -33,6 +35,7 @@ export class EditorView {
   private buffer: ITextBuffer;
   private viewport: Viewport;
   private metrics: IFontMetrics;
+  private options: IEditorOptions;
 
   private linesCollection: RenderedLinesCollection;
   private gutter: ViewGutter;
@@ -46,6 +49,7 @@ export class EditorView {
 
   constructor(targetElement: HTMLElement, buffer: ITextBuffer, options: IEditorOptions = {}) {
     this.buffer = buffer;
+    this.options = options;
 
     // 1. Measure Font
     this.metrics = FontMetrics.measure(
@@ -85,7 +89,8 @@ export class EditorView {
       onDeleteForward: () => this.handleDeleteForward(),
       onEnter: () => this.handleEnter(),
       onTab: () => this.handleType('    '),
-      onArrow: (dir, shift) => this.handleArrow(dir, shift)
+      onArrow: (dir, shift) => this.handleArrow(dir, shift),
+      onSave: () => this.options.onSave?.(this.buffer.getText())
     });
 
     // Assemble DOM
@@ -128,6 +133,10 @@ export class EditorView {
     this.inputController.focus();
   }
 
+  blur(): void {
+    this.inputController.blur();
+  }
+
   getSelection(): Selection {
     return this.selection;
   }
@@ -147,12 +156,16 @@ export class EditorView {
   layout(): void {
     const rect = this.rootElement.getBoundingClientRect();
     this.viewport.setDimensions(rect.width, rect.height);
-    this.canvas.style.height = `${this.viewport.getTotalHeight(this.buffer.getLineCount())}px`;
+    const totalHeight = this.viewport.getTotalHeight(this.buffer.getLineCount());
+    this.canvas.style.minHeight = '100%';
+    this.canvas.style.height = `${Math.max(rect.height, totalHeight)}px`;
   }
 
   render(): void {
     const totalLines = this.buffer.getLineCount();
-    this.canvas.style.height = `${this.viewport.getTotalHeight(totalLines)}px`;
+    const totalHeight = this.viewport.getTotalHeight(totalLines);
+    this.canvas.style.minHeight = '100%';
+    this.canvas.style.height = `${Math.max(this.viewport.height, totalHeight)}px`;
 
     const visible = this.viewport.getVisibleLines(totalLines);
     this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
@@ -162,6 +175,11 @@ export class EditorView {
   }
 
   private bindEvents(): void {
+    let startX = 0;
+    let startY = 0;
+    let isScrolling = false;
+    let scrollResetTimer: any = null;
+
     // Scroll handling (virtualization trigger)
     this.scrollContainer.addEventListener('scroll', () => {
       this.viewport.scrollTop = this.scrollContainer.scrollTop;
@@ -170,10 +188,10 @@ export class EditorView {
     });
 
     // Pointer events for click & selection drag
-    const getPosFromEvent = (e: MouseEvent | Touch): Position => {
+    const getPosFromEvent = (clientX: number, clientY: number): Position => {
       const contentRect = this.linesContent.getBoundingClientRect();
-      const x = Math.max(0, e.clientX - contentRect.left + this.scrollContainer.scrollLeft);
-      const y = Math.max(0, e.clientY - contentRect.top + this.scrollContainer.scrollTop);
+      const x = Math.max(0, clientX - contentRect.left + this.scrollContainer.scrollLeft);
+      const y = Math.max(0, clientY - contentRect.top + this.scrollContainer.scrollTop);
 
       const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
       const lineLen = this.buffer.getLineLength(line);
@@ -181,22 +199,62 @@ export class EditorView {
       return new Position(line, col);
     };
 
-    this.linesContent.addEventListener('mousedown', (e: MouseEvent) => {
-      this.isPointerDown = true;
-      this.inputController.focus();
+    // Touch support (tap vs scroll discrimination matching Monaco)
+    this.rootElement.addEventListener('touchstart', (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isScrolling = false;
+      }
+    }, { passive: true });
 
-      const pos = getPosFromEvent(e);
-      this.selectionAnchor = pos;
-      this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
+    this.rootElement.addEventListener('touchmove', (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.clientX - startX);
+        const dy = Math.abs(touch.clientY - startY);
+        if (dx > 8 || dy > 8 || e.touches.length > 1) {
+          isScrolling = true;
+          this.inputController.blur();
+          clearTimeout(scrollResetTimer);
+          scrollResetTimer = setTimeout(() => { isScrolling = false; }, 350);
+        }
+      }
+    }, { passive: true });
+
+    this.rootElement.addEventListener('touchend', (e: TouchEvent) => {
+      if (isScrolling) {
+        clearTimeout(scrollResetTimer);
+        scrollResetTimer = setTimeout(() => { isScrolling = false; }, 350);
+        return;
+      }
+      const touch = e.changedTouches && e.changedTouches[0];
+      if (touch) {
+        const dx = Math.abs(touch.clientX - startX);
+        const dy = Math.abs(touch.clientY - startY);
+        if (dx < 8 && dy < 8) {
+          const pos = getPosFromEvent(touch.clientX, touch.clientY);
+          this.selectionAnchor = pos;
+          this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
+          this.inputController.focus();
+        }
+      }
     });
 
-    this.linesContent.addEventListener('click', () => {
+    // Mouse click & drag
+    this.rootElement.addEventListener('mousedown', (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      this.isPointerDown = true;
+      const pos = getPosFromEvent(e.clientX, e.clientY);
+      this.selectionAnchor = pos;
+      this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
       this.inputController.focus();
     });
 
     window.addEventListener('mousemove', (e: MouseEvent) => {
       if (!this.isPointerDown) return;
-      const currentPos = getPosFromEvent(e);
+      const currentPos = getPosFromEvent(e.clientX, e.clientY);
       this.setSelection(
         new Selection(
           this.selectionAnchor.lineNumber,
@@ -211,17 +269,9 @@ export class EditorView {
       this.isPointerDown = false;
     });
 
-    // Touch support (mobile tap & drag)
-    this.linesContent.addEventListener('touchstart', (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        this.inputController.focus();
-        const pos = getPosFromEvent(e.touches[0]);
-        this.selectionAnchor = pos;
-        this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
-      }
-    }, { passive: true });
-
-    this.linesContent.addEventListener('touchend', () => {
+    this.rootElement.addEventListener('click', (e: MouseEvent) => {
+      const pos = getPosFromEvent(e.clientX, e.clientY);
+      this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
       this.inputController.focus();
     });
   }
@@ -243,6 +293,7 @@ export class EditorView {
     }
     this.linesCollection.refresh(this.buffer);
     this.render();
+    this.options.onDidChangeContent?.(this.buffer);
   }
 
   private handleDeleteBackward(): void {
@@ -265,6 +316,7 @@ export class EditorView {
     }
     this.linesCollection.refresh(this.buffer);
     this.render();
+    this.options.onDidChangeContent?.(this.buffer);
   }
 
   private handleDeleteForward(): void {
@@ -278,6 +330,7 @@ export class EditorView {
     }
     this.linesCollection.refresh(this.buffer);
     this.render();
+    this.options.onDidChangeContent?.(this.buffer);
   }
 
   private handleEnter(): void {
