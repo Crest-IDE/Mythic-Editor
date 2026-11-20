@@ -46,6 +46,7 @@ export class EditorView {
   private selection: Selection = new Selection(1, 1, 1, 1);
   private isPointerDown: boolean = false;
   private selectionAnchor: Position = new Position(1, 1);
+  private maxLineWidth: number = 0;
 
   constructor(targetElement: HTMLElement, buffer: ITextBuffer, options: IEditorOptions = {}) {
     this.buffer = buffer;
@@ -108,6 +109,7 @@ export class EditorView {
     this.bindEvents();
 
     // 6. Initial Layout & Render
+    this.maxLineWidth = this.computeMaxLineWidth();
     this.layout();
     this.render();
   }
@@ -118,6 +120,7 @@ export class EditorView {
 
   setBuffer(newBuffer: ITextBuffer): void {
     this.buffer = newBuffer;
+    this.maxLineWidth = this.computeMaxLineWidth();
     this.linesCollection.flush();
     this.gutter.flush();
     this.selection = new Selection(1, 1, 1, 1);
@@ -161,16 +164,48 @@ export class EditorView {
     this.updateCanvasHeight();
   }
 
+  private computeMaxLineWidth(): number {
+    const totalLines = this.buffer.getLineCount();
+    let maxCols = 0;
+    const limit = Math.min(totalLines, 500);
+    for (let i = 1; i <= limit; i++) {
+      const len = this.buffer.getLineLength(i);
+      if (len > maxCols) maxCols = len;
+    }
+    return maxCols * this.viewport.charWidth;
+  }
+
   private updateCanvasHeight(): void {
     const totalLines = this.buffer.getLineCount();
     const totalHeight = this.viewport.getTotalHeight(totalLines);
     this.canvas.style.minHeight = '100%';
     this.canvas.style.height = `${totalHeight}px`;
+
+    const totalWidth = Math.max(
+      this.viewport.viewportWidth,
+      this.viewport.gutterWidth + this.maxLineWidth + 100
+    );
+    this.canvas.style.minWidth = '100%';
+    this.canvas.style.width = `${totalWidth}px`;
   }
 
   render(): void {
     const totalLines = this.buffer.getLineCount();
     const visible = this.viewport.getVisibleLines(totalLines);
+
+    // Track dynamic max line width from visible lines (mirroring Monaco viewLines._ensureMaxLineWidth)
+    let widthChanged = false;
+    for (let i = visible.startLineNumber; i <= visible.endLineNumber; i++) {
+      const lineWidth = this.buffer.getLineLength(i) * this.viewport.charWidth;
+      if (lineWidth > this.maxLineWidth) {
+        this.maxLineWidth = lineWidth;
+        widthChanged = true;
+      }
+    }
+    if (widthChanged) {
+      this.updateCanvasHeight();
+    }
+
     this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
     this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
     this.selectionOverlay.update(this.selection, this.buffer);
