@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mythic Editor - Core Playground</title>
+    <link rel="stylesheet" href="./src/playground/style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h2>Mythic Editor</h2>
+        <span class="badge">Phase 1: Core Foundation</span>
+      </div>
+      <div class="toolbar">
+        <label for="sample-select" style="font-size: 13px; color: var(--text-muted);">Sample:</label>
+        <select id="sample-select">
+          <option value="basic">Basic TypeScript</option>
+          <option value="unicode">Unicode & Astral Emojis</option>
+          <option value="multiline">Multi-line Document</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="editor-pane">
+        <div class="pane-header">
+          <span>BUFFER VIEW</span>
+          <span style="font-size: 11px; opacity: 0.8;">Read-only validation render</span>
+        </div>
+        <div id="buffer-lines" class="buffer-display"></div>
+      </div>
+
+      <div class="sidebar">
+        <!-- Buffer Stats -->
+        <div class="section">
+          <h3>Buffer Metrics</h3>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Length (chars)</div>
+              <div id="stat-length" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Lines</div>
+              <div id="stat-lines" class="stat-value">0</div>
+            </div>
+            <div class="stat-card" style="grid-column: span 2;">
+              <div class="stat-label">Line Terminator</div>
+              <div id="stat-eol" class="stat-value">LF (\n)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Operations -->
+        <div class="section">
+          <h3>Buffer Operations</h3>
+          <!-- Insert -->
+          <div class="control-group">
+            <div class="control-row">
+              <input id="insert-offset" type="number" placeholder="Offset" value="0" style="width: 80px;" />
+              <input id="insert-text" type="text" placeholder="Text to insert" value="/* test */\n" />
+            </div>
+            <button id="btn-insert">Insert Text</button>
+          </div>
+
+          <!-- Delete -->
+          <div class="control-group" style="margin-top: 14px;">
+            <div class="control-row">
+              <input id="delete-offset" type="number" placeholder="Offset" value="0" style="width: 80px;" />
+              <input id="delete-count" type="number" placeholder="Count" value="5" />
+            </div>
+            <button id="btn-delete" class="danger">Delete Range</button>
+          </div>
+        </div>
+
+        <!-- Coordinate Converter -->
+        <div class="section">
+          <h3>Coordinate Inspector</h3>
+          <div class="control-group">
+            <label style="font-size: 11px; color: var(--text-muted);">Offset to Position:</label>
+            <div class="control-row">
+              <input id="calc-offset" type="number" placeholder="Offset (0-based)" value="0" />
+              <div id="calc-pos-result" style="font-size: 12px; align-self: center; color: #818cf8; min-width: 120px;">Line 1, Col 1</div>
+            </div>
+          </div>
+
+          <div class="control-group" style="margin-top: 8px;">
+            <label style="font-size: 11px; color: var(--text-muted);">Position to Offset:</label>
+            <div class="control-row">
+              <input id="calc-line" type="number" placeholder="Line (1-based)" value="1" style="width: 70px;" />
+              <input id="calc-col" type="number" placeholder="Col (1-based)" value="1" style="width: 70px;" />
+              <div id="calc-offset-result" style="font-size: 12px; align-self: center; color: #818cf8;">Offset: 0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Operations Log -->
+        <div class="section" style="flex: 1; display: flex; flex-direction: column;">
+          <h3>Operations Log</h3>
+          <div id="log-box" class="log-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/playground/playground.ts"></script>
+  </body>
+</html>
