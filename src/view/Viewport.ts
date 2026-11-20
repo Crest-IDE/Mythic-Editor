@@ -17,12 +17,30 @@ export class Viewport {
   viewportHeight: number = 600;
   lineHeight: number = 21;
   charWidth: number = 8.4;
-  gutterWidth: number = 55;
+  gutterWidth: number = 52;
   overscanLines: number = 15;
+
+  // Monaco layout constants (vs/editor/common/config/editorOptions.ts)
+  readonly lineDecorationsWidth: number = 10; // EditorLineDecorationsWidth default: 10px
+  readonly lineNumbersMinChars: number = 5;  // lineNumbersMinChars default: 5
 
   constructor(lineHeight: number = 21, charWidth: number = 8.4) {
     this.lineHeight = lineHeight;
     this.charWidth = charWidth;
+    this.gutterWidth = this.computeGutterWidth(1);
+  }
+
+  /**
+   * Monaco-equivalent calculation for line numbers margin and contentLeft offset.
+   * Reference: vs/editor/common/config/editorOptions.ts (computeLayoutInfo)
+   */
+  computeGutterWidth(totalLineCount: number): number {
+    const digitCount = Math.max(
+      this.lineNumbersMinChars,
+      Math.floor(Math.log10(Math.max(1, totalLineCount))) + 1
+    );
+    const lineNumbersWidth = Math.round(digitCount * this.charWidth);
+    return lineNumbersWidth + this.lineDecorationsWidth;
   }
 
   /**

@@ -59,8 +59,9 @@ export class EditorView {
       options.lineHeight
     );
 
-    // 2. Initialize Viewport
+    // 2. Initialize Viewport (Monaco layout info computation)
     this.viewport = new Viewport(this.metrics.lineHeight, this.metrics.charWidth);
+    this.viewport.gutterWidth = this.viewport.computeGutterWidth(this.buffer.getLineCount());
 
     // 3. Construct DOM structure
     this.rootElement = document.createElement('div');
@@ -121,6 +122,9 @@ export class EditorView {
   setBuffer(newBuffer: ITextBuffer): void {
     this.buffer = newBuffer;
     this.maxLineWidth = this.computeMaxLineWidth();
+    this.viewport.gutterWidth = this.viewport.computeGutterWidth(this.buffer.getLineCount());
+    this.gutter.container.style.width = `${this.viewport.gutterWidth}px`;
+    this.linesContent.style.left = `${this.viewport.gutterWidth}px`;
     this.linesCollection.flush();
     this.gutter.flush();
     this.selection = new Selection(1, 1, 1, 1);
@@ -180,6 +184,13 @@ export class EditorView {
     const totalHeight = this.viewport.getTotalHeight(totalLines);
     this.canvas.style.minHeight = '100%';
     this.canvas.style.height = `${totalHeight}px`;
+
+    const newGutterWidth = this.viewport.computeGutterWidth(totalLines);
+    if (newGutterWidth !== this.viewport.gutterWidth) {
+      this.viewport.gutterWidth = newGutterWidth;
+      this.gutter.container.style.width = `${newGutterWidth}px`;
+      this.linesContent.style.left = `${newGutterWidth}px`;
+    }
 
     const totalWidth = Math.max(
       this.viewport.viewportWidth,

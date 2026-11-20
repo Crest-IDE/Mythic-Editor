@@ -56,4 +56,17 @@ describe('Viewport & Virtualization Coordinates', () => {
     // Clamps column to line length + 1 (end of line cursor position)
     expect(viewport.getColumnAtX(500, 10)).toBe(11);
   });
+
+  it('computes Monaco-grounded gutterWidth and line decorations gap', () => {
+    // charWidth is 8, lineNumbersMinChars is 5, lineDecorationsWidth is 10
+    // For small document (< 100,000 lines), digitCount clamps to 5
+    // gutterWidth = 5 * 8 + 10 = 50px
+    expect(viewport.computeGutterWidth(1)).toBe(50);
+    expect(viewport.computeGutterWidth(100)).toBe(50);
+    expect(viewport.computeGutterWidth(99999)).toBe(50);
+
+    // 6-digit document (100,000 lines):
+    // gutterWidth = 6 * 8 + 10 = 58px
+    expect(viewport.computeGutterWidth(100000)).toBe(58);
+  });
 });
