@@ -15,7 +15,6 @@ export class ViewGutter {
   private readonly viewport: Viewport;
   private numbers: HTMLElement[] = [];
   private rendLineNumberStart: number = 1;
-  private currentActiveLine?: number;
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
@@ -36,17 +35,6 @@ export class ViewGutter {
     const oldStart = this.rendLineNumberStart;
     const oldLength = this.numbers.length;
     const oldEnd = oldStart + oldLength - 1;
-
-    // Fast-path: visible range and active line unchanged, no DOM work needed
-    if (
-      oldLength > 0 &&
-      startLineNumber === oldStart &&
-      endLineNumber === oldEnd &&
-      activeLineNumber === this.currentActiveLine
-    ) {
-      return;
-    }
-    this.currentActiveLine = activeLineNumber;
 
     // Case 1: No line numbers currently, or zero overlap (jump scroll)
     if (oldLength === 0 || endLineNumber < oldStart || startLineNumber > oldEnd) {

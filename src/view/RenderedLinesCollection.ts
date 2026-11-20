@@ -43,11 +43,6 @@ export class RenderedLinesCollection {
     const oldLength = this.lines.length;
     const oldEnd = oldStart + oldLength - 1;
 
-    // Fast-path: visible range unchanged, no DOM work needed
-    if (oldLength > 0 && startLineNumber === oldStart && endLineNumber === oldEnd) {
-      return;
-    }
-
     // Case 1: No lines currently, or zero overlap (jump/flushed scroll)
     if (oldLength === 0 || endLineNumber < oldStart || startLineNumber > oldEnd) {
       this.flush();
