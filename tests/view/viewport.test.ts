@@ -58,15 +58,15 @@ describe('Viewport & Virtualization Coordinates', () => {
   });
 
   it('computes Monaco-grounded gutterWidth and line decorations gap', () => {
-    // charWidth is 8, lineNumbersMinChars is 5, lineDecorationsWidth is 10
+    // charWidth is 8, lineNumbersMinChars is 5, lineDecorationsWidth is 26 (10px base + 16px folding slot)
     // For small document (< 100,000 lines), digitCount clamps to 5
-    // gutterWidth = 5 * 8 + 10 = 50px
-    expect(viewport.computeGutterWidth(1)).toBe(50);
-    expect(viewport.computeGutterWidth(100)).toBe(50);
-    expect(viewport.computeGutterWidth(99999)).toBe(50);
+    // gutterWidth = 5 * 8 + 26 = 66px
+    expect(viewport.computeGutterWidth(1)).toBe(66);
+    expect(viewport.computeGutterWidth(100)).toBe(66);
+    expect(viewport.computeGutterWidth(99999)).toBe(66);
 
     // 6-digit document (100,000 lines):
-    // gutterWidth = 6 * 8 + 10 = 58px
-    expect(viewport.computeGutterWidth(100000)).toBe(58);
+    // gutterWidth = 6 * 8 + 26 = 74px
+    expect(viewport.computeGutterWidth(100000)).toBe(74);
   });
 });
