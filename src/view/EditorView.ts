@@ -111,6 +111,23 @@ export class EditorView {
     return this.buffer;
   }
 
+  setBuffer(newBuffer: ITextBuffer): void {
+    this.buffer = newBuffer;
+    this.linesCollection.flush();
+    this.gutter.flush();
+    this.selection = new Selection(1, 1, 1, 1);
+    this.scrollContainer.scrollTop = 0;
+    this.scrollContainer.scrollLeft = 0;
+    this.viewport.scrollTop = 0;
+    this.viewport.scrollLeft = 0;
+    this.layout();
+    this.render();
+  }
+
+  focus(): void {
+    this.inputController.focus();
+  }
+
   getSelection(): Selection {
     return this.selection;
   }
@@ -165,13 +182,16 @@ export class EditorView {
     };
 
     this.linesContent.addEventListener('mousedown', (e: MouseEvent) => {
-      e.preventDefault();
       this.isPointerDown = true;
       this.inputController.focus();
 
       const pos = getPosFromEvent(e);
       this.selectionAnchor = pos;
       this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
+    });
+
+    this.linesContent.addEventListener('click', () => {
+      this.inputController.focus();
     });
 
     window.addEventListener('mousemove', (e: MouseEvent) => {
@@ -200,6 +220,10 @@ export class EditorView {
         this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
       }
     }, { passive: true });
+
+    this.linesContent.addEventListener('touchend', () => {
+      this.inputController.focus();
+    });
   }
 
   // --- Input Handlers ---

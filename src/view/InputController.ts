@@ -42,7 +42,18 @@ export class InputController {
   }
 
   focus(): void {
-    this.textArea.focus();
+    try {
+      this.textArea.focus({ preventScroll: true });
+    } catch (_) {
+      this.textArea.focus();
+    }
+
+    // Explicitly notify Android host to show the soft keyboard
+    if (typeof (window as unknown as { CrestAndroidBridge?: { showKeyboard: () => void } }).CrestAndroidBridge?.showKeyboard === 'function') {
+      try {
+        (window as unknown as { CrestAndroidBridge: { showKeyboard: () => void } }).CrestAndroidBridge.showKeyboard();
+      } catch (_) {}
+    }
   }
 
   updatePosition(cursorPosition: Position): void {

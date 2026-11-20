@@ -115,19 +115,23 @@
   50% { opacity: 0; }
 }
 
-/* Hidden Textarea for Input / Gboard */
+/* Textarea for Input / Gboard (must have non-zero geometry and opacity for Android IME) */
 .mythic-inputarea {
   position: absolute;
   top: 0;
   left: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  width: 2px;
+  height: 20px;
+  opacity: 0.01;
+  color: transparent;
+  background: transparent;
+  caret-color: transparent;
   border: none;
   padding: 0;
   margin: 0;
   overflow: hidden;
   outline: none;
   resize: none;
-  z-index: 1;
+  z-index: 10;
+  font-size: 16px;
 }
