@@ -1,12 +1,8 @@
 /**
- * Mythic Editor - View Engine (Monaco Architecture Port)
+ * Mythic Editor - High-Performance View Engine
  *
- * Ported directly from Microsoft Monaco Editor (MIT License)
- * Reference: vs/editor/browser/view.ts, vs/editor/browser/viewParts/viewLines/viewLines.ts,
- *            vs/editor/browser/viewParts/margin/margin.ts
- *
- * Coordinates rendering, sub-pixel monospace layout, GPU-accelerated translate3d scrolling,
- * and mobile touch/IME interaction.
+ * Coordinates the virtualized viewport, line rendering, cursor, selection overlays,
+ * and mobile/desktop input controllers.
  */
 
 import { ITextBuffer } from '../core/buffer/ITextBuffer';
@@ -32,9 +28,8 @@ export interface IEditorOptions {
 
 export class EditorView {
   readonly rootElement: HTMLElement;
-  private readonly overflowGuard: HTMLElement;
   private readonly scrollContainer: HTMLElement;
-  private readonly scrollDummy: HTMLElement;
+  private readonly canvas: HTMLElement;
   private readonly linesContent: HTMLElement;
 
   private buffer: ITextBuffer;
@@ -66,25 +61,17 @@ export class EditorView {
     // 2. Initialize Viewport
     this.viewport = new Viewport(this.metrics.lineHeight, this.metrics.charWidth);
 
-    // 3. Construct DOM structure matching Monaco's overflowGuard & scrollable architecture
+    // 3. Construct DOM structure
     this.rootElement = document.createElement('div');
     this.rootElement.className = 'mythic-editor';
     this.rootElement.style.fontSize = `${this.metrics.fontSize}px`;
 
-    // Overflow guard clips lines to editor screen bounds
-    this.overflowGuard = document.createElement('div');
-    this.overflowGuard.className = 'mythic-overflow-guard';
-
-    // Scroll container captures native touch momentum & scroll events
     this.scrollContainer = document.createElement('div');
     this.scrollContainer.className = 'mythic-scroll-container';
 
-    // Virtual scroll dummy defines total scrollable virtual bounds
-    this.scrollDummy = document.createElement('div');
-    this.scrollDummy.className = 'mythic-scroll-dummy';
-    this.scrollContainer.appendChild(this.scrollDummy);
+    this.canvas = document.createElement('div');
+    this.canvas.className = 'mythic-canvas';
 
-    // Lines content layer holds view lines, cursors, selections, and textarea
     this.linesContent = document.createElement('div');
     this.linesContent.className = 'mythic-lines-content';
     this.linesContent.style.left = `${this.viewport.gutterWidth}px`;
@@ -111,10 +98,9 @@ export class EditorView {
     this.linesContent.appendChild(this.cursor.element);
     this.linesContent.appendChild(this.inputController.textArea);
 
-    this.overflowGuard.appendChild(this.gutter.container);
-    this.overflowGuard.appendChild(this.linesContent);
-
-    this.rootElement.appendChild(this.overflowGuard);
+    this.canvas.appendChild(this.gutter.container);
+    this.canvas.appendChild(this.linesContent);
+    this.scrollContainer.appendChild(this.canvas);
     this.rootElement.appendChild(this.scrollContainer);
     targetElement.appendChild(this.rootElement);
 
@@ -178,9 +164,8 @@ export class EditorView {
   private updateCanvasHeight(): void {
     const totalLines = this.buffer.getLineCount();
     const totalHeight = this.viewport.getTotalHeight(totalLines);
-    this.scrollDummy.style.minHeight = '100%';
-    this.scrollDummy.style.height = `${totalHeight}px`;
-    this.scrollDummy.style.width = `${this.viewport.gutterWidth + 2000}px`;
+    this.canvas.style.minHeight = '100%';
+    this.canvas.style.height = `${totalHeight}px`;
   }
 
   render(): void {
@@ -190,12 +175,6 @@ export class EditorView {
     this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
     this.selectionOverlay.update(this.selection, this.buffer);
     this.cursor.updatePosition(this.selection.getPosition());
-
-    // Hardware-accelerated GPU translation matching Monaco ViewLines & Margin
-    const scrollTop = this.viewport.scrollTop;
-    const scrollLeft = this.viewport.scrollLeft;
-    this.gutter.container.style.transform = `translate3d(0, ${-scrollTop}px, 0)`;
-    this.linesContent.style.transform = `translate3d(${-scrollLeft}px, ${-scrollTop}px, 0)`;
   }
 
   private bindEvents(): void {
@@ -204,18 +183,18 @@ export class EditorView {
     let isScrolling = false;
     let scrollResetTimer: any = null;
 
-    // Scroll handling (GPU transform synchronization & virtualization trigger)
+    // Scroll handling (virtualization trigger)
     this.scrollContainer.addEventListener('scroll', () => {
       this.viewport.scrollTop = this.scrollContainer.scrollTop;
       this.viewport.scrollLeft = this.scrollContainer.scrollLeft;
       this.render();
     });
 
-    // Hit-testing coordinate conversion (Document Line & Column from viewport client coordinates)
+    // Pointer events for click & selection drag
     const getPosFromEvent = (clientX: number, clientY: number): Position => {
-      const rect = this.rootElement.getBoundingClientRect();
-      const x = Math.max(0, clientX - rect.left - this.viewport.gutterWidth + this.viewport.scrollLeft);
-      const y = Math.max(0, clientY - rect.top + this.viewport.scrollTop);
+      const contentRect = this.linesContent.getBoundingClientRect();
+      const x = Math.max(0, clientX - contentRect.left);
+      const y = Math.max(0, clientY - contentRect.top);
 
       const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
       const lineLen = this.buffer.getLineLength(line);
@@ -224,7 +203,7 @@ export class EditorView {
     };
 
     // Touch support (tap vs scroll discrimination matching Monaco)
-    this.scrollContainer.addEventListener('touchstart', (e: TouchEvent) => {
+    this.rootElement.addEventListener('touchstart', (e: TouchEvent) => {
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         startX = touch.clientX;
@@ -233,7 +212,7 @@ export class EditorView {
       }
     }, { passive: true });
 
-    this.scrollContainer.addEventListener('touchmove', (e: TouchEvent) => {
+    this.rootElement.addEventListener('touchmove', (e: TouchEvent) => {
       if (e.touches.length > 0) {
         const touch = e.touches[0];
         const dx = Math.abs(touch.clientX - startX);
@@ -247,7 +226,7 @@ export class EditorView {
       }
     }, { passive: true });
 
-    this.scrollContainer.addEventListener('touchend', (e: TouchEvent) => {
+    this.rootElement.addEventListener('touchend', (e: TouchEvent) => {
       if (isScrolling) {
         clearTimeout(scrollResetTimer);
         scrollResetTimer = setTimeout(() => { isScrolling = false; }, 350);
@@ -267,7 +246,7 @@ export class EditorView {
     });
 
     // Mouse click & drag
-    this.scrollContainer.addEventListener('mousedown', (e: MouseEvent) => {
+    this.rootElement.addEventListener('mousedown', (e: MouseEvent) => {
       if (e.button !== 0) return;
       this.isPointerDown = true;
       const pos = getPosFromEvent(e.clientX, e.clientY);
@@ -293,7 +272,7 @@ export class EditorView {
       this.isPointerDown = false;
     });
 
-    this.scrollContainer.addEventListener('click', (e: MouseEvent) => {
+    this.rootElement.addEventListener('click', (e: MouseEvent) => {
       const pos = getPosFromEvent(e.clientX, e.clientY);
       this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
       this.inputController.focus();
@@ -400,17 +379,18 @@ export class EditorView {
         break;
     }
 
+    const targetPos = new Position(nextLine, nextCol);
     if (expandSelection) {
       this.setSelection(
         new Selection(
           this.selection.selectionStartLineNumber,
           this.selection.selectionStartColumn,
-          nextLine,
-          nextCol
+          targetPos.lineNumber,
+          targetPos.column
         )
       );
     } else {
-      this.setSelection(new Selection(nextLine, nextCol, nextLine, nextCol));
+      this.setSelection(new Selection(targetPos.lineNumber, targetPos.column, targetPos.lineNumber, targetPos.column));
     }
   }
 }

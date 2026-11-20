@@ -1,4 +1,4 @@
-/* Mythic Editor View Styling - Monaco GPU Transform Architecture */
+/* Mythic Editor View Styling */
 
 .mythic-editor {
   position: relative;
@@ -14,40 +14,24 @@
   -webkit-user-select: text;
 }
 
-/* Monaco Overflow Guard Container (Screen Viewport Bounds) */
-.mythic-overflow-guard {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-/* Scroll Container (Native Touch Fling & Scroll Capture) */
 .mythic-scroll-container {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   overflow: auto;
-  pointer-events: auto;
+  position: relative;
   will-change: scroll-position;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Virtual Scroll Dummy (Defines total virtual scrollable extent) */
-.mythic-scroll-dummy {
+.mythic-canvas {
   position: relative;
-  pointer-events: none;
+  width: 100%;
+  min-width: 100%;
 }
 
-/* Gutter & Line Numbers (GPU-accelerated vertical translation, locked horizontally) */
+/* Gutter & Line Numbers (Sticky horizontally, naturally scrolling vertically) */
 .mythic-gutter {
-  position: absolute;
-  top: 0;
+  position: sticky;
   left: 0;
   width: 55px;
   height: 100%;
@@ -56,7 +40,6 @@
   z-index: 10;
   pointer-events: none;
   user-select: none;
-  will-change: transform;
 }
 
 .mythic-line-number {
@@ -68,7 +51,6 @@
   color: #6b7280;
   font-size: 12px;
   user-select: none;
-  font-variant-numeric: tabular-nums;
   transition: color 0.1s;
 }
 
@@ -77,16 +59,13 @@
   font-weight: 600;
 }
 
-/* Lines Layer (GPU-accelerated 2D translation matching Monaco lines-content) */
+/* Lines Layer (Unclipped to prevent scroll clipping / disappearing lines) */
 .mythic-lines-content {
   position: absolute;
   top: 0;
-  left: 55px;
-  width: 100000px;
+  right: 0;
   height: 100%;
-  pointer-events: none;
   user-select: text;
-  will-change: transform;
 }
 
 .mythic-view-line {
