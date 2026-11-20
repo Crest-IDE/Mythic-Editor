@@ -18,7 +18,7 @@ export class Viewport {
   lineHeight: number = 21;
   charWidth: number = 8.4;
   gutterWidth: number = 55;
-  overscanLines: number = 15;
+  overscanLines: number = 8;
 
   constructor(lineHeight: number = 21, charWidth: number = 8.4) {
     this.lineHeight = lineHeight;

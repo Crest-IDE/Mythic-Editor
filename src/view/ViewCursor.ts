@@ -29,16 +29,14 @@ export class ViewCursor {
   }
 
   updatePosition(position: Position): void {
+    if (this.position.lineNumber === position.lineNumber && this.position.column === position.column) {
+      return;
+    }
     this.position = position;
     const top = this.viewport.getLineTop(position.lineNumber);
     const left = this.viewport.getColumnLeft(position.column);
 
     this.element.style.transform = `translate3d(${left}px, ${top}px, 0)`;
-
-    // Restart blinking on cursor motion
-    this.element.classList.remove('blink');
-    void this.element.offsetWidth; // trigger reflow
-    this.element.classList.add('blink');
   }
 
   show(): void {

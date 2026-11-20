@@ -57,6 +57,7 @@
   pointer-events: none;
   user-select: none;
   will-change: transform;
+  contain: strict;
 }
 
 .mythic-line-number {
@@ -69,7 +70,6 @@
   font-size: 12px;
   user-select: none;
   font-variant-numeric: tabular-nums;
-  transition: color 0.1s;
 }
 
 .mythic-line-number.active {
@@ -87,6 +87,7 @@
   pointer-events: none;
   user-select: text;
   will-change: transform;
+  contain: strict;
 }
 
 .mythic-view-line {

@@ -204,12 +204,31 @@ export class EditorView {
     let isScrolling = false;
     let scrollResetTimer: any = null;
 
-    // Scroll handling (GPU transform synchronization & virtualization trigger)
+    // Scroll handling: Immediate GPU transform (60/120fps smooth) + rAF DOM virtualization
+    let renderScheduled = false;
+
     this.scrollContainer.addEventListener('scroll', () => {
       this.viewport.scrollTop = this.scrollContainer.scrollTop;
       this.viewport.scrollLeft = this.scrollContainer.scrollLeft;
-      this.render();
-    });
+
+      // 1. Hardware GPU translation updates synchronously to follow finger with ZERO lag
+      const scrollTop = this.viewport.scrollTop;
+      const scrollLeft = this.viewport.scrollLeft;
+      this.gutter.container.style.transform = `translate3d(0, ${-scrollTop}px, 0)`;
+      this.linesContent.style.transform = `translate3d(${-scrollLeft}px, ${-scrollTop}px, 0)`;
+
+      // 2. Batch sliding-window virtual DOM line recycling to next animation frame
+      if (!renderScheduled) {
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+          renderScheduled = false;
+          const totalLines = this.buffer.getLineCount();
+          const visible = this.viewport.getVisibleLines(totalLines);
+          this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
+          this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
+        });
+      }
+    }, { passive: true });
 
     // Hit-testing coordinate conversion (Document Line & Column from viewport client coordinates)
     const getPosFromEvent = (clientX: number, clientY: number): Position => {
@@ -240,7 +259,6 @@ export class EditorView {
         const dy = Math.abs(touch.clientY - startY);
         if (dx > 8 || dy > 8 || e.touches.length > 1) {
           isScrolling = true;
-          this.inputController.blur();
           clearTimeout(scrollResetTimer);
           scrollResetTimer = setTimeout(() => { isScrolling = false; }, 350);
         }
