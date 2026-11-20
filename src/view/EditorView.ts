@@ -155,18 +155,21 @@ export class EditorView {
 
   layout(): void {
     const rect = this.rootElement.getBoundingClientRect();
-    this.viewport.setDimensions(rect.width, rect.height);
-    const totalHeight = this.viewport.getTotalHeight(this.buffer.getLineCount());
+    const width = rect.width || this.rootElement.clientWidth || 800;
+    const height = rect.height || this.rootElement.clientHeight || 600;
+    this.viewport.setDimensions(width, height);
+    this.updateCanvasHeight();
+  }
+
+  private updateCanvasHeight(): void {
+    const totalLines = this.buffer.getLineCount();
+    const totalHeight = this.viewport.getTotalHeight(totalLines);
     this.canvas.style.minHeight = '100%';
-    this.canvas.style.height = `${Math.max(rect.height, totalHeight)}px`;
+    this.canvas.style.height = `${totalHeight}px`;
   }
 
   render(): void {
     const totalLines = this.buffer.getLineCount();
-    const totalHeight = this.viewport.getTotalHeight(totalLines);
-    this.canvas.style.minHeight = '100%';
-    this.canvas.style.height = `${Math.max(this.viewport.height, totalHeight)}px`;
-
     const visible = this.viewport.getVisibleLines(totalLines);
     this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
     this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
@@ -190,8 +193,8 @@ export class EditorView {
     // Pointer events for click & selection drag
     const getPosFromEvent = (clientX: number, clientY: number): Position => {
       const contentRect = this.linesContent.getBoundingClientRect();
-      const x = Math.max(0, clientX - contentRect.left + this.scrollContainer.scrollLeft);
-      const y = Math.max(0, clientY - contentRect.top + this.scrollContainer.scrollTop);
+      const x = Math.max(0, clientX - contentRect.left);
+      const y = Math.max(0, clientY - contentRect.top);
 
       const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
       const lineLen = this.buffer.getLineLength(line);
@@ -291,6 +294,7 @@ export class EditorView {
       const newPos = this.buffer.getPositionAt(offset + text.length);
       this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
     }
+    this.updateCanvasHeight();
     this.linesCollection.refresh(this.buffer);
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
@@ -314,6 +318,7 @@ export class EditorView {
         this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
       }
     }
+    this.updateCanvasHeight();
     this.linesCollection.refresh(this.buffer);
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
@@ -328,6 +333,7 @@ export class EditorView {
         this.buffer.delete(offset, 1);
       }
     }
+    this.updateCanvasHeight();
     this.linesCollection.refresh(this.buffer);
     this.render();
     this.options.onDidChangeContent?.(this.buffer);

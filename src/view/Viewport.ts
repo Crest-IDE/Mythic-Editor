@@ -18,7 +18,7 @@ export class Viewport {
   lineHeight: number = 21;
   charWidth: number = 8.4;
   gutterWidth: number = 55;
-  overscanLines: number = 3;
+  overscanLines: number = 15;
 
   constructor(lineHeight: number = 21, charWidth: number = 8.4) {
     this.lineHeight = lineHeight;
@@ -64,10 +64,15 @@ export class Viewport {
   }
 
   /**
-   * Total virtual height of document.
+   * Total virtual height of document including scroll beyond last line (matching Monaco).
    */
-  getTotalHeight(totalLineCount: number): number {
-    return Math.max(1, totalLineCount) * this.lineHeight;
+  getTotalHeight(totalLineCount: number, scrollBeyondLastLine: boolean = true): number {
+    const contentHeight = Math.max(1, totalLineCount) * this.lineHeight;
+    if (!scrollBeyondLastLine) {
+      return contentHeight;
+    }
+    const scrollBeyond = Math.max(0, this.viewportHeight - this.lineHeight);
+    return contentHeight + scrollBeyond;
   }
 
   /**
