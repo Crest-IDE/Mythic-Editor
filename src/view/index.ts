@@ -9,4 +9,5 @@ export * from './ViewGutter';
 export * from './ViewCursor';
 export * from './ViewSelection';
 export * from './InputController';
+export * from './AutoClosingPairs';
 export * from './EditorView';

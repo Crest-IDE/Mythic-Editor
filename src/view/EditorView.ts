@@ -16,6 +16,7 @@ import { ViewGutter } from './ViewGutter';
 import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
 import { InputController } from './InputController';
+import { AutoClosingPairs } from './AutoClosingPairs';
 import './editor.css';
 
 export interface IEditorOptions {
@@ -328,14 +329,61 @@ export class EditorView {
   // --- Input Handlers ---
   private handleType(text: string): void {
     if (!this.selection.isEmpty()) {
+      // Monaco Surround Selection Operation: wrap selection with matching pair
+      if (text.length === 1) {
+        const selectedText = this.buffer.getValueInRange(this.selection);
+        const closeChar = AutoClosingPairs.shouldSurround(text, selectedText);
+        if (closeChar) {
+          const startOffset = this.buffer.getOffsetAt(this.selection.getStartPosition());
+          const surrounded = text + selectedText + closeChar;
+          this.buffer.applyEdit(this.selection, surrounded);
+          const startPos = this.buffer.getPositionAt(startOffset + text.length);
+          const endPos = this.buffer.getPositionAt(startOffset + text.length + selectedText.length);
+          this.setSelection(new Selection(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column));
+          this.updateCanvasHeight();
+          this.linesCollection.refresh(this.buffer);
+          this.render();
+          this.options.onDidChangeContent?.(this.buffer);
+          return;
+        }
+      }
+
       // Replace active selection
       const startOffset = this.buffer.getOffsetAt(this.selection.getStartPosition());
       this.buffer.applyEdit(this.selection, text);
       const newPos = this.buffer.getPositionAt(startOffset + text.length);
       this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
     } else {
+      const pos = this.selection.getPosition();
+      const lineContent = this.buffer.getLineContent(pos.lineNumber);
+      const charBefore = pos.column > 1 ? lineContent.charAt(pos.column - 2) : '';
+      const charAfter = pos.column <= lineContent.length ? lineContent.charAt(pos.column - 1) : '';
+
+      // Monaco Auto Closing Overtype Operation: skip over matching close character
+      if (text.length === 1 && AutoClosingPairs.isOvertype(text, charAfter, charBefore)) {
+        this.setSelection(new Selection(pos.lineNumber, pos.column + 1, pos.lineNumber, pos.column + 1));
+        return;
+      }
+
+      // Monaco Auto Closing Open Char Operation: insert open + close and position cursor inside
+      if (text.length === 1) {
+        const closeChar = AutoClosingPairs.shouldAutoClose(text, charBefore, charAfter);
+        if (closeChar) {
+          const offset = this.buffer.getOffsetAt(pos);
+          const insertText = text + closeChar;
+          this.buffer.insert(offset, insertText);
+          const newPos = this.buffer.getPositionAt(offset + text.length);
+          this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+          this.updateCanvasHeight();
+          this.linesCollection.refresh(this.buffer);
+          this.render();
+          this.options.onDidChangeContent?.(this.buffer);
+          return;
+        }
+      }
+
       // Normal insert
-      const offset = this.buffer.getOffsetAt(this.selection.getPosition());
+      const offset = this.buffer.getOffsetAt(pos);
       this.buffer.insert(offset, text);
       const newPos = this.buffer.getPositionAt(offset + text.length);
       this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
@@ -353,8 +401,25 @@ export class EditorView {
       const newPos = this.buffer.getPositionAt(startOffset);
       this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
     } else {
-      const offset = this.buffer.getOffsetAt(this.selection.getPosition());
+      const pos = this.selection.getPosition();
+      const offset = this.buffer.getOffsetAt(pos);
       if (offset > 0) {
+        const lineContent = this.buffer.getLineContent(pos.lineNumber);
+        const charBefore = pos.column > 1 ? lineContent.charAt(pos.column - 2) : '';
+        const charAfter = pos.column <= lineContent.length ? lineContent.charAt(pos.column - 1) : '';
+
+        // Monaco Auto Closing Pair Delete: delete both brackets when cursor is between them
+        if (AutoClosingPairs.shouldAutoDeletePair(charBefore, charAfter)) {
+          this.buffer.delete(offset - 1, 2);
+          const newPos = this.buffer.getPositionAt(offset - 1);
+          this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+          this.updateCanvasHeight();
+          this.linesCollection.refresh(this.buffer);
+          this.render();
+          this.options.onDidChangeContent?.(this.buffer);
+          return;
+        }
+
         const fullText = this.buffer.getText();
         const adjustedOffset = OffsetTransformer.adjustSurrogateOffset(fullText, offset - 1);
         const deleteCount = offset - adjustedOffset;
