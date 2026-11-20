@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mythic Editor - Core Playground</title>
     <link rel="stylesheet" href="./src/playground/style.css" />
+    <link rel="stylesheet" href="./src/view/editor.css" />
   </head>
   <body>
     <header>
       <div class="brand">
         <h2>Mythic Editor</h2>
-        <span class="badge">Phase 1: Core Foundation</span>
+        <span class="badge">Phase 2: Virtualized View & Input</span>
       </div>
       <div class="toolbar">
         <label for="sample-select" style="font-size: 13px; color: var(--text-muted);">Sample:</label>
@@ -25,10 +26,10 @@
     <div class="container">
       <div class="editor-pane">
         <div class="pane-header">
-          <span>BUFFER VIEW</span>
-          <span style="font-size: 11px; opacity: 0.8;">Read-only validation render</span>
+          <span>INTERACTIVE EDITOR VIEW</span>
+          <span style="font-size: 11px; opacity: 0.8;">Click to position cursor, drag to select, type to edit</span>
         </div>
-        <div id="buffer-lines" class="buffer-display"></div>
+        <div id="editor-mount" style="flex: 1; position: relative; overflow: hidden;"></div>
       </div>
 
       <div class="sidebar">
@@ -45,8 +46,8 @@
               <div id="stat-lines" class="stat-value">0</div>
             </div>
             <div class="stat-card" style="grid-column: span 2;">
-              <div class="stat-label">Line Terminator</div>
-              <div id="stat-eol" class="stat-value">LF (\n)</div>
+              <div class="stat-label">Active Cursor / Selection</div>
+              <div id="stat-cursor" class="stat-value" style="font-size: 13px; color: #818cf8;">(1, 1)</div>
             </div>
           </div>
         </div>
@@ -101,6 +102,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden compatibility container for previous tests -->
+    <div id="buffer-lines" style="display: none;"></div>
 
     <script type="module" src="./src/playground/playground.ts"></script>
   </body>

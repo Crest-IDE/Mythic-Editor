@@ -1,14 +1,13 @@
 /**
- * Mythic Editor - Browser Validation Playground
- * Validates the underlying core buffer and model layers.
+ * Mythic Editor - Playground & Interactive View Host
  */
 
 import { PieceTreeTextBuffer } from '../core/buffer/PieceTreeTextBuffer';
 import { Position } from '../core/model/Position';
-import { Range } from '../core/model/Range';
+import { EditorView } from '../view/EditorView';
 
 const SAMPLES: Record<string, string> = {
-  basic: `// Welcome to Mythic Editor Core Playground!
+  basic: `// Welcome to Mythic Editor View Engine!
 function calculateFibonacci(n: number): number {
   if (n <= 1) return n;
   return calculateFibonacci(n - 1) + calculateFibonacci(n - 2);
@@ -20,40 +19,64 @@ console.log(calculateFibonacci(10));`,
 const greeting = "नमस्ते दुनिया!"; // Devanagari
 const chinese = "你好，世界！"; // CJK
 const arabic = "مرحبا بالعالم"; // RTL Arabic
-const emojis = "🚀 😈 🔥 💀 ⚡ 😀"; // Surrogate Pairs (2 UTF-16 code units each)
+const emojis = "🚀 😈 🔥 💀 ⚡ 😀"; // Astral Emojis
 const math = "∀x ∈ ℝ: x² ≥ 0"; // Math symbols`,
 
-  multiline: Array.from({ length: 50 }, (_, i) => `Line ${i + 1}: The quick brown fox jumps over the lazy dog (${i * 10})`).join('\n')
+  multiline: Array.from({ length: 100 }, (_, i) => `Line ${i + 1}: The quick brown fox jumps over the lazy dog (${i * 10})`).join('\n')
 };
 
 class PlaygroundApp {
-  private buffer: PieceTreeTextBuffer;
+  private editorView!: EditorView;
   private logBox: HTMLElement;
-  private bufferView: HTMLElement;
+  private mountEl: HTMLElement;
 
   constructor() {
-    this.buffer = new PieceTreeTextBuffer(SAMPLES.basic, '\n');
+    this.mountEl = document.getElementById('editor-mount')!;
     this.logBox = document.getElementById('log-box')!;
-    this.bufferView = document.getElementById('buffer-lines')!;
 
+    this.initEditor(SAMPLES.basic);
     this.bindEvents();
-    this.render();
-    this.log('Playground initialized with sample text.');
+    this.log('Interactive Editor View mounted successfully.');
+  }
+
+  private initEditor(text: string): void {
+    this.mountEl.innerHTML = '';
+    const buffer = new PieceTreeTextBuffer(text, '\n');
+    this.editorView = new EditorView(this.mountEl, buffer);
+
+    // Keep stats updated
+    const updateStats = () => {
+      const lenEl = document.getElementById('stat-length');
+      const linesEl = document.getElementById('stat-lines');
+      const cursorEl = document.getElementById('stat-cursor');
+
+      if (lenEl) lenEl.textContent = buffer.getLength().toString();
+      if (linesEl) linesEl.textContent = buffer.getLineCount().toString();
+      if (cursorEl) {
+        const sel = this.editorView.getSelection();
+        cursorEl.textContent = sel.isEmpty()
+          ? `(${sel.positionLineNumber}, ${sel.positionColumn})`
+          : `[${sel.selectionStartLineNumber},${sel.selectionStartColumn} -> ${sel.positionLineNumber},${sel.positionColumn}]`;
+      }
+    };
+
+    updateStats();
+    window.addEventListener('mouseup', updateStats);
+    window.addEventListener('keyup', updateStats);
   }
 
   private bindEvents(): void {
     // Sample select
     const sampleSelect = document.getElementById('sample-select') as HTMLSelectElement;
-    sampleSelect.addEventListener('change', () => {
+    sampleSelect?.addEventListener('change', () => {
       const key = sampleSelect.value;
       if (SAMPLES[key]) {
-        this.buffer = new PieceTreeTextBuffer(SAMPLES[key], '\n');
-        this.render();
+        this.initEditor(SAMPLES[key]);
         this.log(`Loaded sample: ${key}`);
       }
     });
 
-    // Insert operation
+    // Programmatic Insert operation
     document.getElementById('btn-insert')?.addEventListener('click', () => {
       const offsetInput = document.getElementById('insert-offset') as HTMLInputElement;
       const textInput = document.getElementById('insert-text') as HTMLInputElement;
@@ -63,14 +86,16 @@ class PlaygroundApp {
       if (isNaN(offset) || !text) return;
 
       const t0 = performance.now();
-      this.buffer.insert(offset, text);
+      const buffer = this.editorView.getBuffer();
+      buffer.insert(offset, text);
+      this.editorView.render();
       const dt = (performance.now() - t0).toFixed(3);
 
-      this.render();
+      this.updateMetrics();
       this.log(`Inserted ${text.length} chars at offset ${offset} in ${dt}ms`);
     });
 
-    // Delete operation
+    // Programmatic Delete operation
     document.getElementById('btn-delete')?.addEventListener('click', () => {
       const offsetInput = document.getElementById('delete-offset') as HTMLInputElement;
       const countInput = document.getElementById('delete-count') as HTMLInputElement;
@@ -80,10 +105,12 @@ class PlaygroundApp {
       if (isNaN(offset) || isNaN(count)) return;
 
       const t0 = performance.now();
-      this.buffer.delete(offset, count);
+      const buffer = this.editorView.getBuffer();
+      buffer.delete(offset, count);
+      this.editorView.render();
       const dt = (performance.now() - t0).toFixed(3);
 
-      this.render();
+      this.updateMetrics();
       this.log(`Deleted ${count} chars at offset ${offset} in ${dt}ms`);
     });
 
@@ -93,7 +120,7 @@ class PlaygroundApp {
       const offset = parseInt(calcOffset.value, 10);
       const res = document.getElementById('calc-pos-result');
       if (res && !isNaN(offset)) {
-        const pos = this.buffer.getPositionAt(offset);
+        const pos = this.editorView.getBuffer().getPositionAt(offset);
         res.textContent = `Line ${pos.lineNumber}, Col ${pos.column}`;
       }
     });
@@ -106,55 +133,26 @@ class PlaygroundApp {
       const col = parseInt(calcCol.value, 10);
       const res = document.getElementById('calc-offset-result');
       if (res && !isNaN(line) && !isNaN(col)) {
-        const offset = this.buffer.getOffsetAt(new Position(line, col));
+        const offset = this.editorView.getBuffer().getOffsetAt(new Position(line, col));
         res.textContent = `Offset: ${offset}`;
       }
     };
     calcLine?.addEventListener('input', updatePosToOffset);
     calcCol?.addEventListener('input', updatePosToOffset);
+
+    // Resize handling
+    window.addEventListener('resize', () => {
+      this.editorView.layout();
+      this.editorView.render();
+    });
   }
 
-  private render(): void {
-    // Stats
-    const lengthEl = document.getElementById('stat-length');
+  private updateMetrics(): void {
+    const buffer = this.editorView.getBuffer();
+    const lenEl = document.getElementById('stat-length');
     const linesEl = document.getElementById('stat-lines');
-    const eolEl = document.getElementById('stat-eol');
-
-    if (lengthEl) lengthEl.textContent = this.buffer.getLength().toString();
-    if (linesEl) linesEl.textContent = this.buffer.getLineCount().toString();
-    if (eolEl) eolEl.textContent = this.buffer.getEOL() === '\n' ? 'LF (\\n)' : 'CRLF (\\r\\n)';
-
-    // Buffer lines view
-    this.bufferView.innerHTML = '';
-    const lineCount = this.buffer.getLineCount();
-
-    // Render up to 500 lines for the playground view
-    const renderLimit = Math.min(lineCount, 500);
-    for (let i = 1; i <= renderLimit; i++) {
-      const row = document.createElement('div');
-      row.className = 'line-row';
-
-      const lineNo = document.createElement('div');
-      lineNo.className = 'line-no';
-      lineNo.textContent = i.toString();
-
-      const lineContent = document.createElement('div');
-      lineContent.className = 'line-content';
-      lineContent.textContent = this.buffer.getLineContent(i);
-
-      row.appendChild(lineNo);
-      row.appendChild(lineContent);
-      this.bufferView.appendChild(row);
-    }
-
-    if (lineCount > 500) {
-      const overflow = document.createElement('div');
-      overflow.className = 'line-row';
-      overflow.style.color = '#9ca3af';
-      overflow.style.paddingLeft = '50px';
-      overflow.textContent = `... and ${lineCount - 500} more lines`;
-      this.bufferView.appendChild(overflow);
-    }
+    if (lenEl) lenEl.textContent = buffer.getLength().toString();
+    if (linesEl) linesEl.textContent = buffer.getLineCount().toString();
   }
 
   private log(message: string): void {

@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PieceTreeTextBuffer } from '@mythic/core/buffer/PieceTreeTextBuffer';
 import { OffsetTransformer } from '@mythic/core/model/OffsetTransformer';
-import { Position } from '@mythic/core/model/Position';
 
 describe('Unicode & Surrogate Pair Handling', () => {
   it('correctly counts UTF-16 code units for emojis and astral code points', () => {

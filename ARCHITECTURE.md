@@ -31,7 +31,16 @@ src/
 │           ├── rbTree.ts         # Augmented balanced Red-Black tree
 │           ├── lineStarts.ts     # EOL indexing
 │           └── pieceTreeBase.ts  # Piece table implementation
-└── playground/                   # Minimal browser validation interface
+├── view/
+│   ├── FontMetrics.ts            # Monospace sub-pixel font measurement
+│   ├── Viewport.ts               # Virtualized viewport scrolling math
+│   ├── RenderedLinesCollection.ts# Line DOM recycling & virtualization
+│   ├── ViewGutter.ts             # Line numbers column
+│   ├── ViewCursor.ts             # Blinking caret overlay
+│   ├── ViewSelection.ts          # Selection highlight rectangles
+│   ├── InputController.ts        # Gboard/IME invisible textarea bridge
+│   └── EditorView.ts             # Main view engine orchestrator
+└── playground/                   # Interactive browser playground
 ```
 
 ## 3. Future Roadmap

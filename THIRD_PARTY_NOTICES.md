@@ -18,3 +18,18 @@ Mythic Editor incorporates and adapts algorithms from the following open-source 
 3. `src/core/buffer/pieceTree/pieceTreeBase.ts`:
    Adapted from `vs/editor/common/model/pieceTreeTextBuffer/pieceTreeBase.ts`.
    Implements a piece table buffer with chunk indexing, node splitting, and CRLF boundary validation, without external VS Code runtime dependencies.
+4. `src/view/FontMetrics.ts`:
+   Adapted from `vs/editor/browser/config/charWidthReader.js`.
+   Implements sub-pixel character width measurement for monospace fonts.
+5. `src/view/RenderedLinesCollection.ts`:
+   Adapted from `vs/editor/browser/view/viewLayer.js`.
+   Implements line DOM recycling and virtualization inside the visible viewport.
+6. `src/view/ViewCursor.ts`:
+   Adapted from `vs/editor/browser/viewParts/viewCursors/viewCursor.js`.
+   Implements caret blinking and coordinate transformations.
+7. `src/view/ViewSelection.ts`:
+   Adapted from `vs/editor/browser/viewParts/selections/selections.js`.
+   Implements multi-line selection overlay rectangle rendering.
+8. `src/view/InputController.ts`:
+   Adapted from `vs/editor/browser/controller/editContext/textArea/textAreaEditContextInput.js`.
+   Implements invisible inputarea bridge for keyboard, Android Gboard, and IME composition events.
