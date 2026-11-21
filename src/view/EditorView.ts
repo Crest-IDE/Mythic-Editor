@@ -84,8 +84,13 @@ export class EditorView {
     this.linesContent.style.left = `${this.viewport.gutterWidth}px`;
 
     // 4. Subsystem Components
+    let initialTokensProvider = options.tokensProvider;
+    if (initialTokensProvider && 'update' in initialTokensProvider && typeof (initialTokensProvider as any).update === 'function') {
+      (initialTokensProvider as any).update(this.buffer);
+    }
+
     this.gutter = new ViewGutter(this.viewport);
-    this.linesCollection = new RenderedLinesCollection(this.linesContent, this.viewport, options.tokensProvider);
+    this.linesCollection = new RenderedLinesCollection(this.linesContent, this.viewport, initialTokensProvider);
     this.cursor = new ViewCursor(this.viewport);
     this.selectionOverlay = new ViewSelection(this.viewport);
 
@@ -129,6 +134,10 @@ export class EditorView {
   setBuffer(newBuffer: ITextBuffer): void {
     this.buffer = newBuffer;
     this.editStack.clear();
+    const provider = this.linesCollection.getTokensProvider();
+    if (provider && 'update' in provider && typeof (provider as any).update === 'function') {
+      (provider as any).update(this.buffer);
+    }
     this.maxLineWidth = this.computeMaxLineWidth();
     this.viewport.gutterWidth = this.viewport.computeGutterWidth(this.buffer.getLineCount());
     this.gutter.container.style.width = `${this.viewport.gutterWidth}px`;
@@ -145,12 +154,34 @@ export class EditorView {
   }
 
   setTokensProvider(provider: ILineTokensProvider | null): void {
+    if (provider && 'update' in provider && typeof (provider as any).update === 'function') {
+      (provider as any).update(this.buffer);
+    }
     this.linesCollection.setTokensProvider(provider);
     this.linesCollection.refresh(this.buffer);
   }
 
+  setLanguage(language: string): void {
+    const currentProvider = this.linesCollection.getTokensProvider();
+    if (currentProvider && 'setLanguage' in currentProvider && typeof (currentProvider as any).setLanguage === 'function') {
+      (currentProvider as any).setLanguage(language);
+      if ('update' in currentProvider && typeof (currentProvider as any).update === 'function') {
+        (currentProvider as any).update(this.buffer);
+      }
+      this.linesCollection.refresh(this.buffer);
+    }
+  }
+
   getTokensProvider(): ILineTokensProvider | null {
     return this.linesCollection.getTokensProvider();
+  }
+
+  private refreshLines(): void {
+    const provider = this.linesCollection.getTokensProvider();
+    if (provider && 'update' in provider && typeof (provider as any).update === 'function') {
+      (provider as any).update(this.buffer);
+    }
+    this.linesCollection.refresh(this.buffer);
   }
 
   focus(): void {
@@ -351,7 +382,7 @@ export class EditorView {
     }
     this.setSelection(beforeSelection);
     this.updateCanvasHeight();
-    this.linesCollection.refresh(this.buffer);
+    this.refreshLines();
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
     return true;
@@ -364,7 +395,7 @@ export class EditorView {
     }
     this.setSelection(afterSelection);
     this.updateCanvasHeight();
-    this.linesCollection.refresh(this.buffer);
+    this.refreshLines();
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
     return true;
@@ -399,7 +430,7 @@ export class EditorView {
           this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(startOffset, selectedText, startOffset, surrounded));
           this.editStack.pushStackElement();
           this.updateCanvasHeight();
-          this.linesCollection.refresh(this.buffer);
+          this.refreshLines();
           this.render();
           this.options.onDidChangeContent?.(this.buffer);
           return;
@@ -440,7 +471,7 @@ export class EditorView {
           this.setSelection(newSelection);
           this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(offset, '', offset, insertText));
           this.updateCanvasHeight();
-          this.linesCollection.refresh(this.buffer);
+          this.refreshLines();
           this.render();
           this.options.onDidChangeContent?.(this.buffer);
           return;
@@ -456,7 +487,7 @@ export class EditorView {
       this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(offset, '', offset, text));
     }
     this.updateCanvasHeight();
-    this.linesCollection.refresh(this.buffer);
+    this.refreshLines();
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
   }
@@ -490,7 +521,7 @@ export class EditorView {
           this.setSelection(newSelection);
           this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(offset - 1, deletedText, offset - 1, ''));
           this.updateCanvasHeight();
-          this.linesCollection.refresh(this.buffer);
+          this.refreshLines();
           this.render();
           this.options.onDidChangeContent?.(this.buffer);
           return;
@@ -509,7 +540,7 @@ export class EditorView {
       }
     }
     this.updateCanvasHeight();
-    this.linesCollection.refresh(this.buffer);
+    this.refreshLines();
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
   }
@@ -527,7 +558,7 @@ export class EditorView {
       }
     }
     this.updateCanvasHeight();
-    this.linesCollection.refresh(this.buffer);
+    this.refreshLines();
     this.render();
     this.options.onDidChangeContent?.(this.buffer);
   }

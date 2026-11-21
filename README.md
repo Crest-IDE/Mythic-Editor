@@ -78,6 +78,24 @@ editor.setSelection(/* Selection */);
 editor.render();
 ```
 
+### Editor view with Tree-sitter Syntax Highlighting
+
+```ts
+import { PieceTreeTextBuffer } from '@mythic/core';
+import { EditorView } from '@mythic/view';
+import { TreeSitterHighlighter } from '@mythic/syntax';
+
+const buffer = new PieceTreeTextBuffer('function add(a, b) {\n  return a + b;\n}', '\n');
+
+const editor = new EditorView(document.getElementById('editor-mount')!, buffer, {
+  language: 'javascript', // Automatically activates Tree-sitter highlighter
+  fontSize: 14
+});
+
+// Switch language dynamically at runtime
+editor.setLanguage('python');
+```
+
 Call `editor.layout()` and `editor.render()` after the container is resized.
 
 ---
@@ -105,10 +123,13 @@ src/
 │   ├── model/                 # Position, Range, Selection, OffsetTransformer
 │   └── buffer/                # ITextBuffer, PieceTreeTextBuffer
 │       └── pieceTree/         # rbTree, lineStarts, pieceTreeBase
+├── syntax/
+│   ├── index.ts               # Syntax subsystem exports
+│   └── TreeSitterHighlighter.ts # WebAssembly Tree-sitter highlighter
 ├── view/
 │   ├── FontMetrics.ts         # Monospace sub-pixel measurement
 │   ├── Viewport.ts            # Scroll offsets and visible-line math
-│   ├── RenderedLinesCollection.ts  # DOM line recycling
+│   ├── RenderedLinesCollection.ts  # DOM line recycling & token spans
 │   ├── ViewGutter.ts          # Line-number column
 │   ├── ViewCursor.ts          # Blinking caret
 │   ├── ViewSelection.ts       # Selection highlight rectangles

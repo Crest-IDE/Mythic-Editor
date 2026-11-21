@@ -31,10 +31,13 @@ src/
 │           ├── rbTree.ts         # Augmented balanced Red-Black tree
 │           ├── lineStarts.ts     # EOL indexing
 │           └── pieceTreeBase.ts  # Piece table implementation
+├── syntax/
+│   ├── index.ts                  # Syntax subsystem exports
+│   └── TreeSitterHighlighter.ts  # WebAssembly Tree-sitter highlighter & tokens provider
 ├── view/
 │   ├── FontMetrics.ts            # Monospace sub-pixel font measurement
 │   ├── Viewport.ts               # Virtualized viewport scrolling math
-│   ├── RenderedLinesCollection.ts# Line DOM recycling & virtualization
+│   ├── RenderedLinesCollection.ts# Line DOM recycling, virtualization & token spans
 │   ├── ViewGutter.ts             # Line numbers column
 │   ├── ViewCursor.ts             # Blinking caret overlay
 │   ├── ViewSelection.ts          # Selection highlight rectangles
@@ -43,7 +46,15 @@ src/
 └── playground/                   # Interactive browser playground
 ```
 
-## 3. Future Roadmap
+## 3. Syntax Highlighting Architecture
+
+Mythic Editor uses an extensible, WebAssembly-based **Tree-sitter** engine:
+- **`TreeSitterHighlighter`**: Implements `ILineTokensProvider`, interfacing directly with official `web-tree-sitter` WebAssembly parsers.
+- **AST Leaf Mapping**: Traverses the Concrete Syntax Tree (CST) and maps language-specific nodes to standard editor theme tokens (`keyword`, `function`, `string`, `comment`, `number`, `variable`, `type`, `operator`, `property`, `punctuation`).
+- **Dynamic Language Switching**: Supports runtime language switching via `editor.setLanguage('python')` or during initialization `{ language: 'javascript' }`.
+- **Multiline Range Slicing**: Splits multiline tokens (e.g. block comments, template strings) cleanly across individual virtualized viewport lines.
+
+## 4. Future Roadmap
 
 - **Phase 2**: View virtualization, DOM line rendering, and touch input controllers.
 - **Native / Hybrid Engine**: Storage layer prepared to interface with high-performance WebAssembly or Rust piece tables if needed.

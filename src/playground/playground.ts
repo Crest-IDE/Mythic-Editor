@@ -5,6 +5,7 @@
 import { PieceTreeTextBuffer } from '../core/buffer/PieceTreeTextBuffer';
 import { Position } from '../core/model/Position';
 import { EditorView } from '../view/EditorView';
+import { TreeSitterHighlighter } from '../syntax/TreeSitterHighlighter';
 
 const SAMPLES: Record<string, string> = {
   basic: `// Welcome to Mythic Editor View Engine!
@@ -27,6 +28,7 @@ const math = "∀x ∈ ℝ: x² ≥ 0"; // Math symbols`,
 
 class PlaygroundApp {
   private editorView!: EditorView;
+  private highlighter: TreeSitterHighlighter | null = null;
   private logBox: HTMLElement;
   private mountEl: HTMLElement;
 
@@ -43,6 +45,13 @@ class PlaygroundApp {
     this.mountEl.innerHTML = '';
     const buffer = new PieceTreeTextBuffer(text, '\n');
     this.editorView = new EditorView(this.mountEl, buffer);
+
+    if (this.highlighter) {
+      this.highlighter.update(buffer);
+      this.editorView.setTokensProvider(this.highlighter);
+    } else {
+      this.loadTreeSitter(buffer);
+    }
 
     // Keep stats updated
     const updateStats = () => {
@@ -63,6 +72,24 @@ class PlaygroundApp {
     updateStats();
     window.addEventListener('mouseup', updateStats);
     window.addEventListener('keyup', updateStats);
+  }
+
+  private async loadTreeSitter(buffer: PieceTreeTextBuffer): Promise<void> {
+    try {
+      this.log('⏳ Initializing Tree-sitter WebAssembly parser...');
+      const highlighter = new TreeSitterHighlighter('typescript');
+      const ok = await highlighter.ready();
+      if (ok) {
+        this.highlighter = highlighter;
+        this.highlighter.update(buffer);
+        this.editorView.setTokensProvider(this.highlighter);
+        this.log('✅ Tree-sitter WebAssembly parser active! Syntax highlighting live.');
+      } else {
+        this.log('⚠️ Tree-sitter parser could not be initialized.');
+      }
+    } catch (err: any) {
+      this.log(`⚠️ Tree-sitter notice: ${err?.message || err}`);
+    }
   }
 
   private bindEvents(): void {
