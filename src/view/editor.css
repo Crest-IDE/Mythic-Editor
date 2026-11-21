@@ -135,3 +135,17 @@
   font-size: 16px;
   pointer-events: none !important;
 }
+
+/* Syntax Highlighting Tokens (Tree-sitter / TextMate / LSP compatible) */
+.mtk-keyword, .mythic-token-keyword { color: #c678dd; font-weight: 500; }
+.mtk-string, .mythic-token-string { color: #98c379; }
+.mtk-comment, .mythic-token-comment { color: #5c6370; font-style: italic; }
+.mtk-number, .mythic-token-number { color: #d19a66; }
+.mtk-function, .mythic-token-function { color: #61afef; }
+.mtk-variable, .mythic-token-variable { color: #e06c75; }
+.mtk-type, .mythic-token-type { color: #e5c07b; }
+.mtk-operator, .mythic-token-operator { color: #56b6c2; }
+.mtk-property, .mythic-token-property { color: #e06c75; }
+.mtk-constant, .mythic-token-constant { color: #d19a66; }
+.mtk-punctuation, .mythic-token-punctuation { color: #abb2bf; }
+

@@ -11,7 +11,7 @@ import { Selection } from '../core/model/Selection';
 import { OffsetTransformer } from '../core/model/OffsetTransformer';
 import { FontMetrics, IFontMetrics } from './FontMetrics';
 import { Viewport } from './Viewport';
-import { RenderedLinesCollection } from './RenderedLinesCollection';
+import { RenderedLinesCollection, ILineTokensProvider } from './RenderedLinesCollection';
 import { ViewGutter } from './ViewGutter';
 import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
@@ -25,6 +25,7 @@ export interface IEditorOptions {
   fontSize?: number;
   fontFamily?: string;
   lineHeight?: number;
+  tokensProvider?: ILineTokensProvider;
   onDidChangeContent?: (buffer: ITextBuffer) => void;
   onSave?: (content: string) => void;
 }
@@ -84,7 +85,7 @@ export class EditorView {
 
     // 4. Subsystem Components
     this.gutter = new ViewGutter(this.viewport);
-    this.linesCollection = new RenderedLinesCollection(this.linesContent, this.viewport);
+    this.linesCollection = new RenderedLinesCollection(this.linesContent, this.viewport, options.tokensProvider);
     this.cursor = new ViewCursor(this.viewport);
     this.selectionOverlay = new ViewSelection(this.viewport);
 
@@ -141,6 +142,15 @@ export class EditorView {
     this.viewport.scrollLeft = 0;
     this.layout();
     this.render();
+  }
+
+  setTokensProvider(provider: ILineTokensProvider | null): void {
+    this.linesCollection.setTokensProvider(provider);
+    this.linesCollection.refresh(this.buffer);
+  }
+
+  getTokensProvider(): ILineTokensProvider | null {
+    return this.linesCollection.getTokensProvider();
   }
 
   focus(): void {
