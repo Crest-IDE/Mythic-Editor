@@ -76,6 +76,19 @@ class PlaygroundApp {
       }
     });
 
+    // Undo / Redo buttons
+    document.getElementById('btn-undo')?.addEventListener('click', () => {
+      if (this.editorView.undo()) {
+        this.log('Undo executed');
+      }
+    });
+
+    document.getElementById('btn-redo')?.addEventListener('click', () => {
+      if (this.editorView.redo()) {
+        this.log('Redo executed');
+      }
+    });
+
     // Programmatic Insert operation
     document.getElementById('btn-insert')?.addEventListener('click', () => {
       const offsetInput = document.getElementById('insert-offset') as HTMLInputElement;

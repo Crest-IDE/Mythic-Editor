@@ -14,7 +14,9 @@
         <span class="badge">Phase 2: Virtualized View & Input</span>
       </div>
       <div class="toolbar">
-        <label for="sample-select" style="font-size: 13px; color: var(--text-muted);">Sample:</label>
+        <button id="btn-undo" title="Undo (Ctrl+Z)" style="padding: 4px 10px; font-size: 12px; cursor: pointer;">↶ Undo</button>
+        <button id="btn-redo" title="Redo (Ctrl+Y)" style="padding: 4px 10px; font-size: 12px; cursor: pointer;">↷ Redo</button>
+        <label for="sample-select" style="font-size: 13px; color: var(--text-muted); margin-left: 8px;">Sample:</label>
         <select id="sample-select">
           <option value="basic">Basic TypeScript</option>
           <option value="unicode">Unicode & Astral Emojis</option>

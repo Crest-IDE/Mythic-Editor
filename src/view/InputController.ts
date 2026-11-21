@@ -19,6 +19,8 @@ export interface IInputEvents {
   onTab: () => void;
   onArrow: (direction: 'left' | 'right' | 'up' | 'down', expandSelection: boolean) => void;
   onSave?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export class InputController {
@@ -85,10 +87,26 @@ export class InputController {
   private bindEvents(): void {
     // Keyboard events
     this.textArea.addEventListener('keydown', (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-        e.preventDefault();
-        this.events.onSave?.();
-        return;
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          this.events.onSave?.();
+          return;
+        }
+        if (e.key === 'z' || e.key === 'Z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            this.events.onRedo?.();
+          } else {
+            this.events.onUndo?.();
+          }
+          return;
+        }
+        if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          this.events.onRedo?.();
+          return;
+        }
       }
 
       if (this.isComposing) return;
@@ -142,9 +160,19 @@ export class InputController {
       this.textArea.value = '';
     });
 
-    // Modern input & beforeinput events
+    // Modern input & beforeinput events (including Android soft keyboard Undo/Redo)
     this.textArea.addEventListener('beforeinput', (e: InputEvent) => {
       if (this.isComposing) return;
+
+      if (e.inputType === 'historyUndo') {
+        e.preventDefault();
+        this.events.onUndo?.();
+        return;
+      } else if (e.inputType === 'historyRedo') {
+        e.preventDefault();
+        this.events.onRedo?.();
+        return;
+      }
 
       if (e.inputType === 'insertText' && e.data) {
         e.preventDefault();

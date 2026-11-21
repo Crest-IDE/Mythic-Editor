@@ -17,6 +17,8 @@ import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
 import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
+import { EditStack } from '../core/model/EditStack';
+import { TextChange } from '../core/model/TextChange';
 import './editor.css';
 
 export interface IEditorOptions {
@@ -48,6 +50,7 @@ export class EditorView {
   private isPointerDown: boolean = false;
   private selectionAnchor: Position = new Position(1, 1);
   private maxLineWidth: number = 0;
+  private editStack: EditStack = new EditStack();
 
   constructor(targetElement: HTMLElement, buffer: ITextBuffer, options: IEditorOptions = {}) {
     this.buffer = buffer;
@@ -93,7 +96,9 @@ export class EditorView {
       onEnter: () => this.handleEnter(),
       onTab: () => this.handleType('    '),
       onArrow: (dir, shift) => this.handleArrow(dir, shift),
-      onSave: () => this.options.onSave?.(this.buffer.getText())
+      onSave: () => this.options.onSave?.(this.buffer.getText()),
+      onUndo: () => this.undo(),
+      onRedo: () => this.redo()
     });
 
     // Assemble DOM
@@ -122,6 +127,7 @@ export class EditorView {
 
   setBuffer(newBuffer: ITextBuffer): void {
     this.buffer = newBuffer;
+    this.editStack.clear();
     this.maxLineWidth = this.computeMaxLineWidth();
     this.viewport.gutterWidth = this.viewport.computeGutterWidth(this.buffer.getLineCount());
     this.gutter.container.style.width = `${this.viewport.gutterWidth}px`;
@@ -320,14 +326,52 @@ export class EditorView {
     });
 
     this.rootElement.addEventListener('click', (e: MouseEvent) => {
+      this.editStack.pushStackElement();
       const pos = getPosFromEvent(e.clientX, e.clientY);
       this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
       this.inputController.focus();
     });
   }
 
+  // --- Public Undo / Redo API (Monaco Port) ---
+  undo(): boolean {
+    const beforeSelection = this.editStack.undo(this.buffer);
+    if (!beforeSelection) {
+      return false;
+    }
+    this.setSelection(beforeSelection);
+    this.updateCanvasHeight();
+    this.linesCollection.refresh(this.buffer);
+    this.render();
+    this.options.onDidChangeContent?.(this.buffer);
+    return true;
+  }
+
+  redo(): boolean {
+    const afterSelection = this.editStack.redo(this.buffer);
+    if (!afterSelection) {
+      return false;
+    }
+    this.setSelection(afterSelection);
+    this.updateCanvasHeight();
+    this.linesCollection.refresh(this.buffer);
+    this.render();
+    this.options.onDidChangeContent?.(this.buffer);
+    return true;
+  }
+
+  canUndo(): boolean {
+    return this.editStack.canUndo();
+  }
+
+  canRedo(): boolean {
+    return this.editStack.canRedo();
+  }
+
   // --- Input Handlers ---
   private handleType(text: string): void {
+    const beforeSelection = this.selection;
+
     if (!this.selection.isEmpty()) {
       // Monaco Surround Selection Operation: wrap selection with matching pair
       if (text.length === 1) {
@@ -339,7 +383,11 @@ export class EditorView {
           this.buffer.applyEdit(this.selection, surrounded);
           const startPos = this.buffer.getPositionAt(startOffset + text.length);
           const endPos = this.buffer.getPositionAt(startOffset + text.length + selectedText.length);
-          this.setSelection(new Selection(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column));
+          const newSelection = new Selection(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column);
+          this.setSelection(newSelection);
+          this.editStack.pushStackElement();
+          this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(startOffset, selectedText, startOffset, surrounded));
+          this.editStack.pushStackElement();
           this.updateCanvasHeight();
           this.linesCollection.refresh(this.buffer);
           this.render();
@@ -349,10 +397,14 @@ export class EditorView {
       }
 
       // Replace active selection
+      const selectedText = this.buffer.getValueInRange(this.selection);
       const startOffset = this.buffer.getOffsetAt(this.selection.getStartPosition());
       this.buffer.applyEdit(this.selection, text);
       const newPos = this.buffer.getPositionAt(startOffset + text.length);
-      this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+      const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+      this.setSelection(newSelection);
+      this.editStack.pushStackElement();
+      this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(startOffset, selectedText, startOffset, text));
     } else {
       const pos = this.selection.getPosition();
       const lineContent = this.buffer.getLineContent(pos.lineNumber);
@@ -361,6 +413,7 @@ export class EditorView {
 
       // Monaco Auto Closing Overtype Operation: skip over matching close character
       if (text.length === 1 && AutoClosingPairs.isOvertype(text, charAfter, charBefore)) {
+        this.editStack.pushStackElement();
         this.setSelection(new Selection(pos.lineNumber, pos.column + 1, pos.lineNumber, pos.column + 1));
         return;
       }
@@ -373,7 +426,9 @@ export class EditorView {
           const insertText = text + closeChar;
           this.buffer.insert(offset, insertText);
           const newPos = this.buffer.getPositionAt(offset + text.length);
-          this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+          const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+          this.setSelection(newSelection);
+          this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(offset, '', offset, insertText));
           this.updateCanvasHeight();
           this.linesCollection.refresh(this.buffer);
           this.render();
@@ -386,7 +441,9 @@ export class EditorView {
       const offset = this.buffer.getOffsetAt(pos);
       this.buffer.insert(offset, text);
       const newPos = this.buffer.getPositionAt(offset + text.length);
-      this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+      const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+      this.setSelection(newSelection);
+      this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(offset, '', offset, text));
     }
     this.updateCanvasHeight();
     this.linesCollection.refresh(this.buffer);
@@ -395,11 +452,17 @@ export class EditorView {
   }
 
   private handleDeleteBackward(): void {
+    const beforeSelection = this.selection;
+
     if (!this.selection.isEmpty()) {
       const startOffset = this.buffer.getOffsetAt(this.selection.getStartPosition());
+      const selectedText = this.buffer.getValueInRange(this.selection);
       this.buffer.deleteRange(this.selection);
       const newPos = this.buffer.getPositionAt(startOffset);
-      this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+      const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+      this.setSelection(newSelection);
+      this.editStack.pushStackElement();
+      this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(startOffset, selectedText, startOffset, ''));
     } else {
       const pos = this.selection.getPosition();
       const offset = this.buffer.getOffsetAt(pos);
@@ -410,9 +473,12 @@ export class EditorView {
 
         // Monaco Auto Closing Pair Delete: delete both brackets when cursor is between them
         if (AutoClosingPairs.shouldAutoDeletePair(charBefore, charAfter)) {
+          const deletedText = charBefore + charAfter;
           this.buffer.delete(offset - 1, 2);
           const newPos = this.buffer.getPositionAt(offset - 1);
-          this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+          const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+          this.setSelection(newSelection);
+          this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(offset - 1, deletedText, offset - 1, ''));
           this.updateCanvasHeight();
           this.linesCollection.refresh(this.buffer);
           this.render();
@@ -423,10 +489,13 @@ export class EditorView {
         const fullText = this.buffer.getText();
         const adjustedOffset = OffsetTransformer.adjustSurrogateOffset(fullText, offset - 1);
         const deleteCount = offset - adjustedOffset;
+        const deletedText = fullText.substring(adjustedOffset, offset);
 
         this.buffer.delete(adjustedOffset, deleteCount);
         const newPos = this.buffer.getPositionAt(adjustedOffset);
-        this.setSelection(new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column));
+        const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+        this.setSelection(newSelection);
+        this.editStack.pushEdit(beforeSelection, newSelection, new TextChange(adjustedOffset, deletedText, adjustedOffset, ''));
       }
     }
     this.updateCanvasHeight();
@@ -439,9 +508,12 @@ export class EditorView {
     if (!this.selection.isEmpty()) {
       this.handleDeleteBackward();
     } else {
+      const beforeSelection = this.selection;
       const offset = this.buffer.getOffsetAt(this.selection.getPosition());
       if (offset < this.buffer.getLength()) {
+        const deletedText = this.buffer.getText().substring(offset, offset + 1);
         this.buffer.delete(offset, 1);
+        this.editStack.pushEdit(beforeSelection, beforeSelection, new TextChange(offset, deletedText, offset, ''));
       }
     }
     this.updateCanvasHeight();
@@ -451,10 +523,13 @@ export class EditorView {
   }
 
   private handleEnter(): void {
+    this.editStack.pushStackElement();
     this.handleType('\n');
+    this.editStack.pushStackElement();
   }
 
   private handleArrow(direction: 'left' | 'right' | 'up' | 'down', expandSelection: boolean): void {
+    this.editStack.pushStackElement();
     const cur = this.selection.getPosition();
     let nextLine = cur.lineNumber;
     let nextCol = cur.column;
