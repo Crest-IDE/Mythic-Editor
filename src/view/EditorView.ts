@@ -19,6 +19,7 @@ import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
 import { EditStack } from '../core/model/EditStack';
 import { TextChange } from '../core/model/TextChange';
+import { CursorColumns } from '../core/model/CursorColumns';
 import { LanguageConfigurationRegistry } from '../core/language/LanguageConfigurationRegistry';
 import './editor.css';
 
@@ -283,8 +284,10 @@ export class EditorView {
 
   setSelection(newSelection: Selection): void {
     this.selection = newSelection;
-    this.cursor.updatePosition(newSelection.getPosition());
-    this.inputController.updatePosition(newSelection.getPosition());
+    const pos = newSelection.getPosition();
+    const lineContent = this.buffer.getLineContent(pos.lineNumber);
+    this.cursor.updatePosition(pos, lineContent);
+    this.inputController.updatePosition(pos, lineContent);
     this.selectionOverlay.update(newSelection, this.buffer);
     this.gutter.update(
       this.viewport.getVisibleLines(this.buffer.getLineCount()).startLineNumber,
@@ -397,8 +400,10 @@ export class EditorView {
       this.layout();
       this.linesCollection.refresh(this.buffer);
       this.render();
-      this.cursor.updatePosition(this.selection.getPosition());
-      this.inputController.updatePosition(this.selection.getPosition());
+      const pos = this.selection.getPosition();
+      const lineContent = this.buffer.getLineContent(pos.lineNumber);
+      this.cursor.updatePosition(pos, lineContent);
+      this.inputController.updatePosition(pos, lineContent);
     }
   }
 
@@ -412,13 +417,14 @@ export class EditorView {
 
   private computeMaxLineWidth(): number {
     const totalLines = this.buffer.getLineCount();
-    let maxCols = 0;
+    let maxWidth = 0;
     const limit = Math.min(totalLines, 500);
     for (let i = 1; i <= limit; i++) {
-      const len = this.buffer.getLineLength(i);
-      if (len > maxCols) maxCols = len;
+      const lineContent = this.buffer.getLineContent(i);
+      const width = this.viewport.getColumnLeft(lineContent.length + 1, lineContent);
+      if (width > maxWidth) maxWidth = width;
     }
-    return maxCols * this.viewport.charWidth;
+    return maxWidth;
   }
 
   private updateCanvasHeight(): void {
@@ -449,7 +455,8 @@ export class EditorView {
     // Track dynamic max line width from visible lines (mirroring Monaco viewLines._ensureMaxLineWidth)
     let widthChanged = false;
     for (let i = visible.startLineNumber; i <= visible.endLineNumber; i++) {
-      const lineWidth = this.buffer.getLineLength(i) * this.viewport.charWidth;
+      const lineContent = this.buffer.getLineContent(i);
+      const lineWidth = this.viewport.getColumnLeft(lineContent.length + 1, lineContent);
       if (lineWidth > this.maxLineWidth) {
         this.maxLineWidth = lineWidth;
         widthChanged = true;
@@ -462,7 +469,8 @@ export class EditorView {
     this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
     this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
     this.selectionOverlay.update(this.selection, this.buffer);
-    this.cursor.updatePosition(this.selection.getPosition());
+    const pos = this.selection.getPosition();
+    this.cursor.updatePosition(pos, this.buffer.getLineContent(pos.lineNumber));
   }
 
   private bindEvents(): void {
@@ -486,7 +494,8 @@ export class EditorView {
 
       const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
       const lineLen = this.buffer.getLineLength(line);
-      const col = this.viewport.getColumnAtX(x, lineLen);
+      const lineContent = this.buffer.getLineContent(line);
+      const col = this.viewport.getColumnAtX(x, lineLen, lineContent);
       return new Position(line, col);
     };
 
@@ -722,8 +731,15 @@ export class EditorView {
         }
 
         const fullText = this.buffer.getText();
-        const adjustedOffset = OffsetTransformer.adjustSurrogateOffset(fullText, offset - 1);
-        const deleteCount = offset - adjustedOffset;
+        let deleteCount = 1;
+        if (pos.column > 1) {
+          const prevCol = CursorColumns.prevGraphemeBoundary(lineContent, pos.column);
+          deleteCount = Math.max(1, pos.column - prevCol);
+        } else {
+          const adjustedOffset = OffsetTransformer.adjustSurrogateOffset(fullText, offset - 1);
+          deleteCount = Math.max(1, offset - adjustedOffset);
+        }
+        const adjustedOffset = offset - deleteCount;
         const deletedText = fullText.substring(adjustedOffset, offset);
 
         this.buffer.delete(adjustedOffset, deleteCount);
@@ -772,7 +788,8 @@ export class EditorView {
     switch (direction) {
       case 'left':
         if (nextCol > 1) {
-          nextCol--;
+          const lineContent = this.buffer.getLineContent(nextLine);
+          nextCol = CursorColumns.prevGraphemeBoundary(lineContent, nextCol);
         } else if (nextLine > 1) {
           nextLine--;
           nextCol = this.buffer.getLineLength(nextLine) + 1;
@@ -780,7 +797,8 @@ export class EditorView {
         break;
       case 'right':
         if (nextCol <= this.buffer.getLineLength(nextLine)) {
-          nextCol++;
+          const lineContent = this.buffer.getLineContent(nextLine);
+          nextCol = CursorColumns.nextGraphemeBoundary(lineContent, nextCol);
         } else if (nextLine < this.buffer.getLineCount()) {
           nextLine++;
           nextCol = 1;
@@ -788,14 +806,20 @@ export class EditorView {
         break;
       case 'up':
         if (nextLine > 1) {
+          const curLineContent = this.buffer.getLineContent(nextLine);
+          const currentVisibleCol = CursorColumns.visibleColumnFromColumn(curLineContent, cur.column);
           nextLine--;
-          nextCol = Math.min(nextCol, this.buffer.getLineLength(nextLine) + 1);
+          const targetLineContent = this.buffer.getLineContent(nextLine);
+          nextCol = CursorColumns.columnFromVisibleColumn(targetLineContent, currentVisibleCol);
         }
         break;
       case 'down':
         if (nextLine < this.buffer.getLineCount()) {
+          const curLineContent = this.buffer.getLineContent(nextLine);
+          const currentVisibleCol = CursorColumns.visibleColumnFromColumn(curLineContent, cur.column);
           nextLine++;
-          nextCol = Math.min(nextCol, this.buffer.getLineLength(nextLine) + 1);
+          const targetLineContent = this.buffer.getLineContent(nextLine);
+          nextCol = CursorColumns.columnFromVisibleColumn(targetLineContent, currentVisibleCol);
         }
         break;
     }

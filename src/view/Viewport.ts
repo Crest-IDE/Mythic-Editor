@@ -5,6 +5,8 @@
  * fixed line height geometry, mirroring Monaco's ViewLayout calculations.
  */
 
+import { CursorColumns } from '../core/model/CursorColumns';
+
 export interface IVisibleLinesRange {
   readonly startLineNumber: number;
   readonly endLineNumber: number;
@@ -110,8 +112,15 @@ export class Viewport {
 
   /**
    * Pixel X offset for a column (1-based column).
+   * When lineContent is provided, calculates the true visible column using
+   * CursorColumns (Monaco standard), accounting for tabs, full-width CJK,
+   * and multi-code-point emojis.
    */
-  getColumnLeft(column: number): number {
+  getColumnLeft(column: number, lineContent?: string): number {
+    if (lineContent !== undefined) {
+      const visibleCol = CursorColumns.visibleColumnFromColumn(lineContent, column);
+      return visibleCol * this.charWidth;
+    }
     return (Math.max(1, column) - 1) * this.charWidth;
   }
 
@@ -125,8 +134,13 @@ export class Viewport {
 
   /**
    * Convert line X coordinate (excluding gutter) to 1-based column.
+   * When lineContent is provided, converts from visual grid column to model column.
    */
-  getColumnAtX(x: number, lineLength: number): number {
+  getColumnAtX(x: number, lineLength: number, lineContent?: string): number {
+    if (lineContent !== undefined) {
+      const targetVisibleCol = Math.max(0, Math.round(x / this.charWidth));
+      return CursorColumns.columnFromVisibleColumn(lineContent, targetVisibleCol);
+    }
     const rawCol = Math.round(x / this.charWidth) + 1;
     return Math.max(1, Math.min(rawCol, lineLength + 1));
   }

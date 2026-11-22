@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { PieceTreeTextBuffer } from '@mythic/core/buffer/PieceTreeTextBuffer';
 import { OffsetTransformer } from '@mythic/core/model/OffsetTransformer';
+import { CursorColumns } from '@mythic/core/model/CursorColumns';
+import { Viewport } from '@mythic/view/Viewport';
 
 describe('Unicode & Surrogate Pair Handling', () => {
   it('correctly counts UTF-16 code units for emojis and astral code points', () => {
@@ -67,5 +69,61 @@ describe('Unicode & Surrogate Pair Handling', () => {
 
     expect(buffer.getLength()).toBe(text.length);
     expect(buffer.getText().slice(-6)).toBe('😀tail');
+  });
+
+  it('calculates visible columns for emojis without cursor drift (Monaco CursorColumns)', () => {
+    // Test a cluster of many emojis
+    const emojiLine = '🚀🔥⚡💀😀🎉✨❤️';
+    const charWidth = 8.4;
+    const viewport = new Viewport(21, charWidth);
+
+    // Each emoji must take exactly 2 visible columns
+    const totalVisible = CursorColumns.visibleColumnFromColumn(emojiLine, emojiLine.length + 1);
+    expect(totalVisible).toBe(16); // 8 emojis * 2 = 16 columns
+
+    // Pixel X offset at the end of 8 emojis must be 16 * charWidth
+    const endX = viewport.getColumnLeft(emojiLine.length + 1, emojiLine);
+    expect(endX).toBeCloseTo(16 * charWidth);
+
+    // Test with 20 emojis in a row
+    const twentyEmojis = '🚀'.repeat(20);
+    const visCols20 = CursorColumns.visibleColumnFromColumn(twentyEmojis, twentyEmojis.length + 1);
+    expect(visCols20).toBe(40); // 20 emojis * 2 columns = 40 columns
+    const endX20 = viewport.getColumnLeft(twentyEmojis.length + 1, twentyEmojis);
+    expect(endX20).toBeCloseTo(40 * charWidth);
+
+    // Test mapping X coordinate back to model column (no cursor landing inside an emoji)
+    for (let i = 0; i < 20; i++) {
+      const clickX = (i * 2) * charWidth + (charWidth * 0.5); // inside the i-th emoji
+      const modelCol = viewport.getColumnAtX(clickX, twentyEmojis.length, twentyEmojis);
+      // Model column should land on an emoji boundary (odd index: 1, 3, 5, 7, ...)
+      expect((modelCol - 1) % 2).toBe(0);
+    }
+  });
+
+  it('correctly calculates visual widths for complex ZWJ, skin-tone, and keycap emojis', () => {
+    // 1. ZWJ emoji (family: 👨‍👩‍👧‍👦 has length 11 UTF-16 code units)
+    const zwj = '👨‍👩‍👧‍👦';
+    expect(zwj.length).toBe(11);
+    const zwjWidth = CursorColumns.visibleColumnFromColumn(zwj, zwj.length + 1);
+    expect(zwjWidth).toBe(2);
+
+    // 2. Skin tone modifier (👍🏽 has length 4 UTF-16 code units)
+    const skinTone = '👍🏽';
+    expect(skinTone.length).toBe(4);
+    const skinToneWidth = CursorColumns.visibleColumnFromColumn(skinTone, skinTone.length + 1);
+    expect(skinToneWidth).toBe(2);
+
+    // 3. Single code point BMP emoji (⚡ has length 1)
+    const singleChar = '⚡';
+    expect(singleChar.length).toBe(1);
+    const singleCharWidth = CursorColumns.visibleColumnFromColumn(singleChar, singleChar.length + 1);
+    expect(singleCharWidth).toBe(2);
+
+    // 4. Keycap emoji (1️⃣ has length 3)
+    const keycap = '1️⃣';
+    expect(keycap.length).toBe(3);
+    const keycapWidth = CursorColumns.visibleColumnFromColumn(keycap, keycap.length + 1);
+    expect(keycapWidth).toBe(2);
   });
 });

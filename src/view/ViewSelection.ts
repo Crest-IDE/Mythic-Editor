@@ -37,22 +37,26 @@ export class ViewSelection {
       let left = 0;
       let width = 0;
 
+      const lineContent = buffer.getLineContent(line);
+
       if (startLine === endLine) {
         // Single line selection
-        left = this.viewport.getColumnLeft(selection.startColumn);
-        width = Math.max(0, (selection.endColumn - selection.startColumn) * this.viewport.charWidth);
+        left = this.viewport.getColumnLeft(selection.startColumn, lineContent);
+        const right = this.viewport.getColumnLeft(selection.endColumn, lineContent);
+        width = Math.max(0, right - left);
       } else if (line === startLine) {
         // First line of multi-line selection
-        left = this.viewport.getColumnLeft(selection.startColumn);
-        width = Math.max(0, (lineLen - selection.startColumn + 1) * this.viewport.charWidth + this.viewport.charWidth * 0.5);
+        left = this.viewport.getColumnLeft(selection.startColumn, lineContent);
+        const right = this.viewport.getColumnLeft(lineLen + 1, lineContent);
+        width = Math.max(0, right - left + this.viewport.charWidth * 0.5);
       } else if (line === endLine) {
         // Last line of multi-line selection
         left = 0;
-        width = Math.max(0, (selection.endColumn - 1) * this.viewport.charWidth);
+        width = Math.max(0, this.viewport.getColumnLeft(selection.endColumn, lineContent));
       } else {
         // Middle line of multi-line selection
         left = 0;
-        width = Math.max(0, lineLen * this.viewport.charWidth + this.viewport.charWidth * 0.5);
+        width = Math.max(0, this.viewport.getColumnLeft(lineLen + 1, lineContent) + this.viewport.charWidth * 0.5);
       }
 
       if (width > 0) {

@@ -78,9 +78,9 @@ export class InputController {
     }
   }
 
-  updatePosition(cursorPosition: Position): void {
+  updatePosition(cursorPosition: Position, lineContent?: string): void {
     const top = this.viewport.getLineTop(cursorPosition.lineNumber);
-    const left = this.viewport.getColumnLeft(cursorPosition.column);
+    const left = this.viewport.getColumnLeft(cursorPosition.column, lineContent);
     this.textArea.style.transform = `translate3d(${left}px, ${top}px, 0)`;
   }
 

@@ -28,10 +28,10 @@ export class ViewCursor {
     return this.position;
   }
 
-  updatePosition(position: Position): void {
+  updatePosition(position: Position, lineContent?: string): void {
     this.position = position;
     const top = this.viewport.getLineTop(position.lineNumber);
-    const left = this.viewport.getColumnLeft(position.column);
+    const left = this.viewport.getColumnLeft(position.column, lineContent);
 
     this.element.style.transform = `translate3d(${left}px, ${top}px, 0)`;
 
