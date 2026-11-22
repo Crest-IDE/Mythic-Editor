@@ -2,32 +2,13 @@
  * Mythic Editor - Tree-sitter Syntax Highlighter
  *
  * Official web-tree-sitter WebAssembly integration for Mythic's ITextBuffer
- * and RenderedLinesCollection tokenization engine. Supports both SCM Queries
- * (Helix / Neovim style) and direct AST visitor fallback.
+ * and RenderedLinesCollection tokenization engine. Pure SCM Query-driven
+ * syntax highlighting (Helix / Neovim standard).
  */
 
 import Parser from 'web-tree-sitter';
 import { ITextBuffer } from '../core/buffer/ITextBuffer';
 import { ILineToken, ILineTokensProvider } from '../view/RenderedLinesCollection';
-
-const KEYWORDS = new Set([
-  'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while',
-  'do', 'switch', 'case', 'default', 'break', 'continue', 'throw', 'try',
-  'catch', 'finally', 'class', 'extends', 'import', 'export', 'from',
-  'async', 'await', 'yield', 'new', 'typeof', 'instanceof', 'in', 'of',
-  'debugger', 'def', 'elif', 'print', 'pass', 'lambda', 'with', 'as',
-  'fn', 'pub', 'mut', 'impl', 'struct', 'enum', 'trait', 'match', 'use',
-  'mod', 'type', 'interface', 'package', 'public', 'private', 'protected',
-  'static', 'readonly', 'abstract', 'is', 'not', 'and', 'or'
-]);
-
-const OPERATORS = new Set([
-  '+', '-', '*', '/', '%', '=', '+=', '-=', '*=', '/=', '==', '===', '!=', '!==',
-  '<', '>', '<=', '>=', '&&', '||', '!', '?', ':', '=>', '&', '|', '^', '~', '<<', '>>',
-  '**', '??', '||=', '&&=', '??='
-]);
-
-const PUNCTUATION = new Set(['(', ')', '{', '}', '[', ']', ';', ',', '.']);
 
 export interface ITreeSitterInitOptions {
   locateFile?: (scriptName: string, scriptDirectory?: string) => string;
@@ -93,8 +74,12 @@ async function fetchTextAsset(url: string): Promise<string> {
     try {
       const fsModuleName = 'fs';
       const fs = await import(/* @vite-ignore */ fsModuleName);
-      if (fs.existsSync(url)) {
-        return fs.readFileSync(url, 'utf8');
+      const clean = url.replace(/^\.\//, '');
+      const candidates = [url, `./public/${clean}`, clean];
+      for (const cand of candidates) {
+        if (fs.existsSync(cand)) {
+          return fs.readFileSync(cand, 'utf8');
+        }
       }
     } catch {
       // Fall through
@@ -217,7 +202,14 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
 
     try {
       let scmText = '';
-      const url = scmPathOrUrl || `${getBaseUrl()}queries/${name}.scm`;
+      const defaultQueryPath = () => {
+        const fileName = `queries/${name}.scm`;
+        if (typeof window !== 'undefined' || typeof document !== 'undefined') {
+          return `${getBaseUrl()}${fileName}`;
+        }
+        return `./public/${fileName}`;
+      };
+      const url = scmPathOrUrl || defaultQueryPath();
       try {
         scmText = await fetchTextAsset(url);
       } catch (e) {
@@ -336,8 +328,6 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
       const query = TreeSitterHighlighter.loadedQueries.get(this.currentLanguage);
       if (query) {
         this.collectTokensFromQuery(query, this.tree.rootNode, buffer);
-      } else {
-        this.collectTokens(this.tree.rootNode, null, buffer);
       }
     } catch {
       // In case of parser error, gracefully leave tokens empty
@@ -390,58 +380,6 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     }
   }
 
-  /**
-   * Walk the Tree-sitter CST and collect syntax tokens (AST Visitor fallback).
-   */
-  private collectTokens(
-    node: Parser.SyntaxNode,
-    parent: Parser.SyntaxNode | null,
-    buffer: ITextBuffer
-  ): void {
-    const childCount = node.childCount;
-
-    if (childCount === 0) {
-      const kind = node.type;
-      const tokenType = this.mapKindToType(kind, parent);
-
-      if (tokenType) {
-        const startPos = node.startPosition;
-        const endPos = node.endPosition;
-
-        if (startPos.row === endPos.row) {
-          const lineNum = startPos.row + 1;
-          this.pushOrUpdateToken(lineNum, {
-            startIndex: startPos.column,
-            endIndex: endPos.column,
-            type: tokenType
-          });
-        } else {
-          for (let r = startPos.row; r <= endPos.row; r++) {
-            const lineNum = r + 1;
-            const lineLen = buffer.getLineLength(lineNum);
-            const startCol = r === startPos.row ? startPos.column : 0;
-            const endCol = r === endPos.row ? endPos.column : lineLen;
-
-            if (endCol > startCol) {
-              this.pushOrUpdateToken(lineNum, {
-                startIndex: startCol,
-                endIndex: endCol,
-                type: tokenType
-              });
-            }
-          }
-        }
-      }
-    } else {
-      for (let i = 0; i < childCount; i++) {
-        const child = node.child(i);
-        if (child) {
-          this.collectTokens(child, node, buffer);
-        }
-      }
-    }
-  }
-
   private pushOrUpdateToken(lineNumber: number, token: ILineToken): void {
     let list = this.lineTokensMap.get(lineNumber);
     if (!list) {
@@ -471,66 +409,6 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     if (name.startsWith('variable.other.member') || name === 'property') return 'property';
     if (name.startsWith('variable')) return 'variable';
     if (name.startsWith('punctuation')) return 'punctuation';
-    return undefined;
-  }
-
-  /**
-   * Map raw Tree-sitter AST node type and parent context to standard theme scope.
-   */
-  private mapKindToType(kind: string, parent: Parser.SyntaxNode | null): string | undefined {
-    if (kind === 'type_identifier' || (kind === 'string' && parent?.type === 'predefined_type') || kind === 'predefined_type') {
-      return 'type';
-    }
-
-    if (KEYWORDS.has(kind)) return 'keyword';
-
-    if (
-      kind === 'true' || kind === 'false' || kind === 'null' || kind === 'undefined' ||
-      kind === 'nil' || kind === 'None' || kind === 'True' || kind === 'False'
-    ) {
-      return 'constant';
-    }
-
-    if (kind === 'number' || kind === 'integer' || kind === 'float') return 'number';
-
-    if (kind === 'comment' || kind === 'line_comment' || kind === 'block_comment') return 'comment';
-
-    if (
-      kind === 'string' ||
-      kind === 'string_fragment' ||
-      kind === 'string_content' ||
-      kind === 'string_start' ||
-      kind === 'string_end' ||
-      kind === 'escape_sequence' ||
-      ((kind === '"' || kind === "'" || kind === '`') && (parent?.type === 'string' || parent?.type === 'template_string'))
-    ) {
-      return 'string';
-    }
-
-    if (kind === 'identifier') {
-      if (parent) {
-        const pKind = parent.type;
-        if (
-          pKind === 'function_declaration' ||
-          pKind === 'function_definition' ||
-          pKind === 'function_expression' ||
-          pKind === 'method_definition' ||
-          pKind === 'call_expression' ||
-          pKind === 'call'
-        ) {
-          return 'function';
-        }
-        if (pKind === 'member_expression' || pKind === 'attribute') {
-          return 'property';
-        }
-      }
-      return 'variable';
-    }
-
-    if (kind === 'property_identifier' || kind === 'field_identifier') return 'property';
-    if (OPERATORS.has(kind)) return 'operator';
-    if (PUNCTUATION.has(kind)) return 'punctuation';
-
     return undefined;
   }
 }
