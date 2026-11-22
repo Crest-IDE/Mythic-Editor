@@ -170,6 +170,7 @@ export class EditorView {
     }
     this.linesCollection.setTokensProvider(provider);
     this.linesCollection.refresh(this.buffer);
+    this.render();
   }
 
   setLanguage(langOrFilename: string): void {
@@ -188,6 +189,7 @@ export class EditorView {
         (currentProvider as any).update(this.buffer);
       }
       this.linesCollection.refresh(this.buffer);
+      this.render();
     }
   }
 
