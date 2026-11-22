@@ -282,13 +282,23 @@ export class EditorView {
     return this.selection;
   }
 
+  getPixelOffsetForPosition(pos: Position): number {
+    const lineContent = this.buffer.getLineContent(pos.lineNumber);
+    const measuredLeft = this.linesCollection.getHorizontalOffset(pos.lineNumber, pos.column);
+    if (measuredLeft !== null && (measuredLeft > 0 || pos.column === 1)) {
+      return measuredLeft;
+    }
+    return this.viewport.getColumnLeft(pos.column, lineContent);
+  }
+
   setSelection(newSelection: Selection): void {
     this.selection = newSelection;
     const pos = newSelection.getPosition();
     const lineContent = this.buffer.getLineContent(pos.lineNumber);
-    this.cursor.updatePosition(pos, lineContent);
-    this.inputController.updatePosition(pos, lineContent);
-    this.selectionOverlay.update(newSelection, this.buffer);
+    const pixelLeft = this.getPixelOffsetForPosition(pos);
+    this.cursor.updatePosition(pos, lineContent, pixelLeft);
+    this.inputController.updatePosition(pos, lineContent, pixelLeft);
+    this.selectionOverlay.update(newSelection, this.buffer, (line, col) => this.linesCollection.getHorizontalOffset(line, col));
     this.gutter.update(
       this.viewport.getVisibleLines(this.buffer.getLineCount()).startLineNumber,
       this.viewport.getVisibleLines(this.buffer.getLineCount()).endLineNumber,
@@ -402,8 +412,9 @@ export class EditorView {
       this.render();
       const pos = this.selection.getPosition();
       const lineContent = this.buffer.getLineContent(pos.lineNumber);
-      this.cursor.updatePosition(pos, lineContent);
-      this.inputController.updatePosition(pos, lineContent);
+      const pixelLeft = this.getPixelOffsetForPosition(pos);
+      this.cursor.updatePosition(pos, lineContent, pixelLeft);
+      this.inputController.updatePosition(pos, lineContent, pixelLeft);
     }
   }
 
@@ -468,9 +479,12 @@ export class EditorView {
 
     this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
     this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
-    this.selectionOverlay.update(this.selection, this.buffer);
+    this.selectionOverlay.update(this.selection, this.buffer, (line, col) => this.linesCollection.getHorizontalOffset(line, col));
     const pos = this.selection.getPosition();
-    this.cursor.updatePosition(pos, this.buffer.getLineContent(pos.lineNumber));
+    const lineContent = this.buffer.getLineContent(pos.lineNumber);
+    const pixelLeft = this.getPixelOffsetForPosition(pos);
+    this.cursor.updatePosition(pos, lineContent, pixelLeft);
+    this.inputController.updatePosition(pos, lineContent, pixelLeft);
   }
 
   private bindEvents(): void {
@@ -495,6 +509,31 @@ export class EditorView {
       const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
       const lineLen = this.buffer.getLineLength(line);
       const lineContent = this.buffer.getLineContent(line);
+
+      // Attempt browser DOM caret hit-testing for sub-pixel accuracy on emojis / variable-width chars
+      if (typeof document !== 'undefined') {
+        const lineEl = this.linesCollection.getLineElement(line);
+        if (lineEl) {
+          if (typeof (document as any).caretPositionFromPoint === 'function') {
+            const caret = (document as any).caretPositionFromPoint(clientX, clientY);
+            if (caret && caret.offsetNode && lineEl.contains(caret.offsetNode)) {
+              const col = this.linesCollection.getColumnFromNodeOffset(line, caret.offsetNode, caret.offset);
+              if (col !== null) {
+                return new Position(line, col);
+              }
+            }
+          } else if (typeof (document as any).caretRangeFromPoint === 'function') {
+            const range = (document as any).caretRangeFromPoint(clientX, clientY);
+            if (range && range.startContainer && lineEl.contains(range.startContainer)) {
+              const col = this.linesCollection.getColumnFromNodeOffset(line, range.startContainer, range.startOffset);
+              if (col !== null) {
+                return new Position(line, col);
+              }
+            }
+          }
+        }
+      }
+
       const col = this.viewport.getColumnAtX(x, lineLen, lineContent);
       return new Position(line, col);
     };
@@ -760,10 +799,17 @@ export class EditorView {
       this.handleDeleteBackward();
     } else {
       const beforeSelection = this.selection;
-      const offset = this.buffer.getOffsetAt(this.selection.getPosition());
+      const pos = this.selection.getPosition();
+      const offset = this.buffer.getOffsetAt(pos);
       if (offset < this.buffer.getLength()) {
-        const deletedText = this.buffer.getText().substring(offset, offset + 1);
-        this.buffer.delete(offset, 1);
+        const lineContent = this.buffer.getLineContent(pos.lineNumber);
+        let deleteCount = 1;
+        if (pos.column <= lineContent.length) {
+          const nextCol = CursorColumns.nextGraphemeBoundary(lineContent, pos.column);
+          deleteCount = Math.max(1, nextCol - pos.column);
+        }
+        const deletedText = this.buffer.getText().substring(offset, offset + deleteCount);
+        this.buffer.delete(offset, deleteCount);
         this.editStack.pushEdit(beforeSelection, beforeSelection, new TextChange(offset, deletedText, offset, ''));
       }
     }

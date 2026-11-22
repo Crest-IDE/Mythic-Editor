@@ -22,7 +22,11 @@ export class ViewSelection {
     this.container.className = 'mythic-selection-layer';
   }
 
-  update(selection: Selection, buffer: ITextBuffer): void {
+  update(
+    selection: Selection,
+    buffer: ITextBuffer,
+    offsetProvider?: (lineNumber: number, column: number) => number | null
+  ): void {
     this.clear();
 
     if (selection.isEmpty()) {
@@ -38,25 +42,32 @@ export class ViewSelection {
       let width = 0;
 
       const lineContent = buffer.getLineContent(line);
+      const getOffset = (col: number) => {
+        const measured = offsetProvider?.(line, col);
+        if (measured !== null && measured !== undefined && (measured > 0 || col === 1)) {
+          return measured;
+        }
+        return this.viewport.getColumnLeft(col, lineContent);
+      };
 
       if (startLine === endLine) {
         // Single line selection
-        left = this.viewport.getColumnLeft(selection.startColumn, lineContent);
-        const right = this.viewport.getColumnLeft(selection.endColumn, lineContent);
+        left = getOffset(selection.startColumn);
+        const right = getOffset(selection.endColumn);
         width = Math.max(0, right - left);
       } else if (line === startLine) {
         // First line of multi-line selection
-        left = this.viewport.getColumnLeft(selection.startColumn, lineContent);
-        const right = this.viewport.getColumnLeft(lineLen + 1, lineContent);
+        left = getOffset(selection.startColumn);
+        const right = getOffset(lineLen + 1);
         width = Math.max(0, right - left + this.viewport.charWidth * 0.5);
       } else if (line === endLine) {
         // Last line of multi-line selection
         left = 0;
-        width = Math.max(0, this.viewport.getColumnLeft(selection.endColumn, lineContent));
+        width = Math.max(0, getOffset(selection.endColumn));
       } else {
         // Middle line of multi-line selection
         left = 0;
-        width = Math.max(0, this.viewport.getColumnLeft(lineLen + 1, lineContent) + this.viewport.charWidth * 0.5);
+        width = Math.max(0, getOffset(lineLen + 1) + this.viewport.charWidth * 0.5);
       }
 
       if (width > 0) {

@@ -10,6 +10,7 @@
 
 import { ITextBuffer } from '../core/buffer/ITextBuffer';
 import { Viewport } from './Viewport';
+import { RangeUtil } from './RangeUtil';
 
 export interface ILineToken {
   startIndex: number;
@@ -46,6 +47,36 @@ export class RenderedLinesCollection {
 
   getTokensProvider(): ILineTokensProvider | null {
     return this.tokensProvider;
+  }
+
+  /**
+   * Get the rendered DOM line element for a 1-based line number if currently in viewport.
+   */
+  getLineElement(lineNumber: number): HTMLElement | undefined {
+    return this.renderedMap.get(lineNumber);
+  }
+
+  /**
+   * Reads precise horizontal sub-pixel offset for a 1-based column from the rendered DOM element.
+   * Returns null if line is not currently rendered or running in headless environment.
+   */
+  getHorizontalOffset(lineNumber: number, column: number): number | null {
+    const lineEl = this.renderedMap.get(lineNumber);
+    if (!lineEl) {
+      return null;
+    }
+    return RangeUtil.readHorizontalOffset(lineEl, column - 1);
+  }
+
+  /**
+   * Maps a DOM node and character offset back to a 1-based column.
+   */
+  getColumnFromNodeOffset(lineNumber: number, targetNode: Node, nodeOffset: number): number | null {
+    const lineEl = this.renderedMap.get(lineNumber);
+    if (!lineEl) {
+      return null;
+    }
+    return RangeUtil.getColumnFromNodeOffset(lineEl, targetNode, nodeOffset);
   }
 
   /**

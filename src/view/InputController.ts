@@ -78,13 +78,14 @@ export class InputController {
     }
   }
 
-  updatePosition(cursorPosition: Position, lineContent?: string): void {
+  updatePosition(cursorPosition: Position, lineContent?: string, overrideLeft?: number): void {
     const top = this.viewport.getLineTop(cursorPosition.lineNumber);
-    const left = this.viewport.getColumnLeft(cursorPosition.column, lineContent);
+    const left = overrideLeft !== undefined ? overrideLeft : this.viewport.getColumnLeft(cursorPosition.column, lineContent);
     this.textArea.style.transform = `translate3d(${left}px, ${top}px, 0)`;
   }
 
   private bindEvents(): void {
+    let beforeInputHandled = false;
     // Keyboard events
     this.textArea.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
@@ -174,9 +175,15 @@ export class InputController {
         return;
       }
 
-      if (e.inputType === 'insertText' && e.data) {
+      if ((e.inputType === 'insertText' || e.inputType === 'insertReplacementText') && e.data) {
+        beforeInputHandled = true;
         e.preventDefault();
         this.events.onType(e.data);
+        // Clean textarea in next tick in case Android WebView native engine forces text in
+        setTimeout(() => {
+          this.textArea.value = '';
+          beforeInputHandled = false;
+        }, 0);
       } else if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') {
         e.preventDefault();
         this.events.onEnter();
@@ -192,6 +199,11 @@ export class InputController {
     // Fallback standard input event
     this.textArea.addEventListener('input', () => {
       if (this.isComposing) return;
+      if (beforeInputHandled) {
+        this.textArea.value = '';
+        beforeInputHandled = false;
+        return;
+      }
       if (this.textArea.value.length > 0) {
         const val = this.textArea.value;
         this.textArea.value = '';
