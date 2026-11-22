@@ -33,6 +33,17 @@ export interface ITreeSitterInitOptions {
   locateFile?: (scriptName: string, scriptDirectory?: string) => string;
 }
 
+function getBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location && window.location.href) {
+    const href = window.location.href;
+    const idx = href.lastIndexOf('/');
+    if (idx !== -1) {
+      return href.substring(0, idx + 1);
+    }
+  }
+  return './';
+}
+
 export class TreeSitterHighlighter implements ILineTokensProvider {
   private static isInitialized = false;
   private static initPromise: Promise<void> | null = null;
@@ -62,7 +73,7 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     TreeSitterHighlighter.initPromise = (async () => {
       const defaultLocate = (scriptName: string) => {
         if (typeof window !== 'undefined' || typeof document !== 'undefined') {
-          return '/' + scriptName;
+          return getBaseUrl() + scriptName;
         }
         return `./public/${scriptName}`;
       };
@@ -92,7 +103,7 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
       const defaultPath = () => {
         const fileName = name.startsWith('tree-sitter-') ? `${name}.wasm` : `tree-sitter-${name}.wasm`;
         if (typeof window !== 'undefined' || typeof document !== 'undefined') {
-          return '/' + fileName;
+          return getBaseUrl() + fileName;
         }
         return `./public/${fileName}`;
       };
@@ -129,7 +140,7 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     try {
       let scmText = '';
       if (typeof window !== 'undefined' || typeof document !== 'undefined') {
-        const url = scmPathOrUrl || `/queries/${name}.scm`;
+        const url = scmPathOrUrl || `${getBaseUrl()}queries/${name}.scm`;
         const res = await fetch(url);
         if (res.ok) {
           scmText = await res.text();
