@@ -16,6 +16,45 @@ function calculateFibonacci(n: number): number {
 
 console.log(calculateFibonacci(10));`,
 
+  python: `# Mythic Editor - Python Tree-sitter & Helix Queries Test
+import math
+from typing import List, Dict, Optional
+
+class PrimeEngine:
+    """High performance prime generator and factorization engine."""
+    def __init__(self, name: str = "MythicPython", max_cache: int = 1000):
+        self.name: str = name
+        self.max_cache: int = max_cache
+        self.cache: Dict[int, bool] = {}
+        self.total_queries: int = 0
+
+    def is_prime(self, n: int) -> bool:
+        """Check prime status using trial division with caching."""
+        self.total_queries += 1
+        if n in self.cache:
+            return self.cache[n]
+        if n <= 1:
+            return False
+        if n <= 3:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+
+        limit = int(math.isqrt(n))
+        for i in range(5, limit + 1, 6):
+            if n % i == 0 or n % (i + 2) == 0:
+                self.cache[n] = False
+                return False
+
+        if len(self.cache) < self.max_cache:
+            self.cache[n] = True
+        return True
+
+engine = PrimeEngine("MythicTester", max_cache=500)
+primes = [x for x in range(2, 50) if engine.is_prime(x)]
+print(f"Generated {len(primes)} primes: {primes}")
+`,
+
   unicode: `// Unicode & Astral Planes Test
 const greeting = "नमस्ते दुनिया!"; // Devanagari
 const chinese = "你好，世界！"; // CJK
@@ -24,6 +63,13 @@ const emojis = "🚀 😈 🔥 💀 ⚡ 😀"; // Astral Emojis
 const math = "∀x ∈ ℝ: x² ≥ 0"; // Math symbols`,
 
   multiline: Array.from({ length: 100 }, (_, i) => `Line ${i + 1}: The quick brown fox jumps over the lazy dog (${i * 10})`).join('\n')
+};
+
+const SAMPLE_LANGUAGES: Record<string, string> = {
+  basic: 'typescript',
+  python: 'python',
+  unicode: 'javascript',
+  multiline: 'typescript'
 };
 
 class PlaygroundApp {
@@ -36,21 +82,28 @@ class PlaygroundApp {
     this.mountEl = document.getElementById('editor-mount')!;
     this.logBox = document.getElementById('log-box')!;
 
-    this.initEditor(SAMPLES.basic);
+    this.initEditor(SAMPLES.basic, 'typescript');
     this.bindEvents();
     this.log('Interactive Editor View mounted successfully.');
   }
 
-  private initEditor(text: string): void {
+  private async initEditor(text: string, language: string = 'typescript'): Promise<void> {
     this.mountEl.innerHTML = '';
     const buffer = new PieceTreeTextBuffer(text, '\n');
     this.editorView = new EditorView(this.mountEl, buffer);
 
     if (this.highlighter) {
+      if (this.highlighter.getLanguage() !== language) {
+        if (!TreeSitterHighlighter.hasLanguage(language)) {
+          this.log(`⏳ Loading Tree-sitter grammar for ${language}...`);
+          await TreeSitterHighlighter.loadLanguage(language);
+        }
+        this.highlighter.setLanguage(language);
+      }
       this.highlighter.update(buffer);
       this.editorView.setTokensProvider(this.highlighter);
     } else {
-      this.loadTreeSitter(buffer);
+      await this.loadTreeSitter(buffer, language);
     }
 
     // Keep stats updated
@@ -74,18 +127,18 @@ class PlaygroundApp {
     window.addEventListener('keyup', updateStats);
   }
 
-  private async loadTreeSitter(buffer: PieceTreeTextBuffer): Promise<void> {
+  private async loadTreeSitter(buffer: PieceTreeTextBuffer, language: string = 'typescript'): Promise<void> {
     try {
-      this.log('⏳ Initializing Tree-sitter WebAssembly parser...');
-      const highlighter = new TreeSitterHighlighter('typescript');
+      this.log(`⏳ Initializing Tree-sitter WebAssembly parser (${language})...`);
+      const highlighter = new TreeSitterHighlighter(language);
       const ok = await highlighter.ready();
       if (ok) {
         this.highlighter = highlighter;
         this.highlighter.update(buffer);
         this.editorView.setTokensProvider(this.highlighter);
-        this.log('✅ Tree-sitter WebAssembly parser active! Syntax highlighting live.');
+        this.log(`✅ Tree-sitter active (${language})! Syntax highlighting live.`);
       } else {
-        this.log('⚠️ Tree-sitter parser could not be initialized.');
+        this.log(`⚠️ Tree-sitter parser could not be initialized for ${language}.`);
       }
     } catch (err: any) {
       this.log(`⚠️ Tree-sitter notice: ${err?.message || err}`);
@@ -95,11 +148,12 @@ class PlaygroundApp {
   private bindEvents(): void {
     // Sample select
     const sampleSelect = document.getElementById('sample-select') as HTMLSelectElement;
-    sampleSelect?.addEventListener('change', () => {
+    sampleSelect?.addEventListener('change', async () => {
       const key = sampleSelect.value;
       if (SAMPLES[key]) {
-        this.initEditor(SAMPLES[key]);
-        this.log(`Loaded sample: ${key}`);
+        const lang = SAMPLE_LANGUAGES[key] || 'typescript';
+        await this.initEditor(SAMPLES[key], lang);
+        this.log(`Loaded sample: ${key} (${lang})`);
       }
     });
 
