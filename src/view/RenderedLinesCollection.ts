@@ -201,7 +201,12 @@ export class RenderedLinesCollection {
       if (end > currentIdx) {
         const span = document.createElement('span');
         const sanitizedType = token.type.replace(/[^a-zA-Z0-9_-]/g, '-');
-        span.className = `mtk-${sanitizedType} mythic-token-${sanitizedType}`;
+        const baseType = sanitizedType.split('-')[0];
+        if (baseType !== sanitizedType) {
+          span.className = `mtk-${sanitizedType} mythic-token-${sanitizedType} mtk-${baseType} mythic-token-${baseType}`;
+        } else {
+          span.className = `mtk-${sanitizedType} mythic-token-${sanitizedType}`;
+        }
         span.textContent = text.slice(currentIdx, end);
         fragment.appendChild(span);
         currentIdx = end;

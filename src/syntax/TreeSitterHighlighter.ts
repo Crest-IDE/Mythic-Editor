@@ -450,13 +450,19 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
    */
   private mapCaptureNameToType(name: string): string | undefined {
     if (name.startsWith('keyword')) return 'keyword';
+    if (name === 'function.builtin') return 'function-builtin';
+    if (name === 'function.method' || name === 'function.method.private') return 'function-method';
     if (name.startsWith('function') || name === 'constructor') return 'function';
     if (name.startsWith('string')) return 'string';
     if (name.startsWith('constant.numeric')) return 'number';
+    if (name === 'constant.builtin' || name === 'constant.builtin.boolean') return 'constant-builtin';
     if (name.startsWith('constant')) return 'constant';
     if (name.startsWith('comment')) return 'comment';
+    if (name === 'type.builtin') return 'type-builtin';
     if (name.startsWith('type')) return 'type';
     if (name.startsWith('operator')) return 'operator';
+    if (name === 'variable.parameter') return 'variable-parameter';
+    if (name === 'variable.builtin') return 'variable-builtin';
     if (name.startsWith('variable.other.member') || name === 'property') return 'property';
     if (name.startsWith('variable')) return 'variable';
     if (name.startsWith('punctuation')) return 'punctuation';

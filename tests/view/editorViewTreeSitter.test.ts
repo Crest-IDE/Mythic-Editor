@@ -155,8 +155,8 @@ describe('EditorView with Tree-sitter Integration', () => {
     const line1Tokens = provider!.getLineTokens(1);
     expect(line1Tokens).toBeDefined();
     expect(line1Tokens!.length).toBeGreaterThan(0);
-    // Should capture 'print' as function or variable and '"hello"' as string
-    expect(line1Tokens!.some(t => t.type === 'function' || t.type === 'variable')).toBe(true);
+    // Should capture 'print' as function (or builtin) or variable and '"hello"' as string
+    expect(line1Tokens!.some(t => t.type.startsWith('function') || t.type.startsWith('variable'))).toBe(true);
     expect(line1Tokens!.some(t => t.type === 'string')).toBe(true);
   });
 });

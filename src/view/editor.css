@@ -20,11 +20,17 @@
   --mythic-token-comment: #5c6370;
   --mythic-token-number: #d19a66;
   --mythic-token-function: #61afef;
+  --mythic-token-function-builtin: #56b6c2;
+  --mythic-token-function-method: #61afef;
   --mythic-token-variable: #e06c75;
+  --mythic-token-variable-parameter: #d19a66;
+  --mythic-token-variable-builtin: #e5c07b;
+  --mythic-token-property: #e5c07b;
   --mythic-token-type: #e5c07b;
+  --mythic-token-type-builtin: #e5c07b;
   --mythic-token-operator: #56b6c2;
-  --mythic-token-property: #e06c75;
   --mythic-token-constant: #d19a66;
+  --mythic-token-constant-builtin: #e5c07b;
   --mythic-token-punctuation: #abb2bf;
   background-color: var(--mythic-editor-bg);
   color: var(--mythic-editor-fg);
@@ -185,10 +191,16 @@
 .mtk-comment, .mythic-token-comment { color: var(--mythic-token-comment, #5c6370); font-style: italic; }
 .mtk-number, .mythic-token-number { color: var(--mythic-token-number, #d19a66); }
 .mtk-function, .mythic-token-function { color: var(--mythic-token-function, #61afef); }
+.mtk-function-builtin, .mythic-token-function-builtin { color: var(--mythic-token-function-builtin, #56b6c2); }
+.mtk-function-method, .mythic-token-function-method { color: var(--mythic-token-function-method, #61afef); }
 .mtk-variable, .mythic-token-variable { color: var(--mythic-token-variable, #e06c75); }
+.mtk-variable-parameter, .mythic-token-variable-parameter { color: var(--mythic-token-variable-parameter, #d19a66); font-style: italic; }
+.mtk-variable-builtin, .mythic-token-variable-builtin { color: var(--mythic-token-variable-builtin, #e5c07b); font-style: italic; }
+.mtk-property, .mythic-token-property { color: var(--mythic-token-property, #e5c07b); }
 .mtk-type, .mythic-token-type { color: var(--mythic-token-type, #e5c07b); }
+.mtk-type-builtin, .mythic-token-type-builtin { color: var(--mythic-token-type-builtin, #e5c07b); }
 .mtk-operator, .mythic-token-operator { color: var(--mythic-token-operator, #56b6c2); }
-.mtk-property, .mythic-token-property { color: var(--mythic-token-property, #e06c75); }
 .mtk-constant, .mythic-token-constant { color: var(--mythic-token-constant, #d19a66); }
+.mtk-constant-builtin, .mythic-token-constant-builtin { color: var(--mythic-token-constant-builtin, #e5c07b); }
 .mtk-punctuation, .mythic-token-punctuation { color: var(--mythic-token-punctuation, #abb2bf); }
 
