@@ -2,7 +2,8 @@
  * Mythic Editor - Tree-sitter Syntax Highlighter
  *
  * Official web-tree-sitter WebAssembly integration for Mythic's ITextBuffer
- * and RenderedLinesCollection tokenization engine.
+ * and RenderedLinesCollection tokenization engine. Supports both SCM Queries
+ * (Helix / Neovim style) and direct AST visitor fallback.
  */
 
 import Parser from 'web-tree-sitter';
@@ -36,6 +37,7 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
   private static isInitialized = false;
   private static initPromise: Promise<void> | null = null;
   private static loadedLanguages: Map<string, Parser.Language> = new Map();
+  private static loadedQueries: Map<string, Parser.Query> = new Map();
 
   private currentLanguage: string;
   private parser: Parser | null = null;
@@ -76,30 +78,93 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
 
   /**
    * Load and register a language WASM grammar into the cache.
+   * Also attempts to load matching highlights.scm query if available.
    */
-  static async loadLanguage(name: string, wasmPathOrUrl?: string): Promise<Parser.Language | null> {
+  static async loadLanguage(
+    name: string,
+    wasmPathOrUrl?: string,
+    scmPathOrUrl?: string
+  ): Promise<Parser.Language | null> {
     await TreeSitterHighlighter.init();
-    if (TreeSitterHighlighter.loadedLanguages.has(name)) {
-      return TreeSitterHighlighter.loadedLanguages.get(name)!;
-    }
+    let lang = TreeSitterHighlighter.loadedLanguages.get(name);
 
-    const defaultPath = () => {
-      const fileName = name.startsWith('tree-sitter-') ? `${name}.wasm` : `tree-sitter-${name}.wasm`;
-      if (typeof window !== 'undefined' || typeof document !== 'undefined') {
-        return '/' + fileName;
+    if (!lang) {
+      const defaultPath = () => {
+        const fileName = name.startsWith('tree-sitter-') ? `${name}.wasm` : `tree-sitter-${name}.wasm`;
+        if (typeof window !== 'undefined' || typeof document !== 'undefined') {
+          return '/' + fileName;
+        }
+        return `./public/${fileName}`;
+      };
+
+      const target = wasmPathOrUrl || defaultPath();
+      try {
+        lang = await Parser.Language.load(target);
+        TreeSitterHighlighter.loadedLanguages.set(name, lang);
+      } catch (err) {
+        console.warn(`[TreeSitterHighlighter] Failed to load language grammar '${name}' from ${target}:`, err);
+        return null;
       }
-      return `./public/${fileName}`;
-    };
-
-    const target = wasmPathOrUrl || defaultPath();
-    try {
-      const lang = await Parser.Language.load(target);
-      TreeSitterHighlighter.loadedLanguages.set(name, lang);
-      return lang;
-    } catch (err) {
-      console.warn(`[TreeSitterHighlighter] Failed to load language grammar '${name}' from ${target}:`, err);
-      return null;
     }
+
+    // Attempt to load associated .scm queries (Helix / Neovim highlights)
+    if (!TreeSitterHighlighter.loadedQueries.has(name) && lang) {
+      await TreeSitterHighlighter.loadQuery(name, scmPathOrUrl);
+    }
+
+    return lang;
+  }
+
+  /**
+   * Load and register an SCM query (e.g. highlights.scm) for a loaded language.
+   */
+  static async loadQuery(name: string, scmPathOrUrl?: string): Promise<Parser.Query | null> {
+    const lang = TreeSitterHighlighter.loadedLanguages.get(name);
+    if (!lang) return null;
+
+    if (TreeSitterHighlighter.loadedQueries.has(name)) {
+      return TreeSitterHighlighter.loadedQueries.get(name)!;
+    }
+
+    try {
+      let scmText = '';
+      if (typeof window !== 'undefined' || typeof document !== 'undefined') {
+        const url = scmPathOrUrl || `/queries/${name}.scm`;
+        const res = await fetch(url);
+        if (res.ok) {
+          scmText = await res.text();
+        }
+      } else {
+        // Node / Vitest environment
+        try {
+          const fsModuleName = 'fs';
+          const fs = await import(/* @vite-ignore */ fsModuleName);
+          const p = scmPathOrUrl || `./public/queries/${name}.scm`;
+          if (fs.existsSync(p)) {
+            scmText = fs.readFileSync(p, 'utf8');
+          }
+        } catch {
+          // Fallback gracefully
+        }
+      }
+
+      if (scmText) {
+        const query = lang.query(scmText);
+        TreeSitterHighlighter.loadedQueries.set(name, query);
+        return query;
+      }
+    } catch {
+      // If query fails to compile, we gracefully fall back to AST visitor
+    }
+
+    return null;
+  }
+
+  /**
+   * Directly register an SCM query instance.
+   */
+  static registerQuery(name: string, query: Parser.Query): void {
+    TreeSitterHighlighter.loadedQueries.set(name, query);
   }
 
   /**
@@ -120,11 +185,11 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
    * Async initialization for Browser & Android WebView environments where WASM
    * must be compiled and instantiated asynchronously.
    */
-  async ready(wasmUrl?: string): Promise<boolean> {
+  async ready(wasmUrl?: string, scmUrl?: string): Promise<boolean> {
     try {
       await TreeSitterHighlighter.init();
       if (!TreeSitterHighlighter.hasLanguage(this.currentLanguage)) {
-        await TreeSitterHighlighter.loadLanguage(this.currentLanguage, wasmUrl);
+        await TreeSitterHighlighter.loadLanguage(this.currentLanguage, wasmUrl, scmUrl);
       }
       return this.initParser(this.currentLanguage);
     } catch {
@@ -135,9 +200,9 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
   /**
    * Factory method to construct and asynchronously initialize a highlighter.
    */
-  static async create(language: string = 'javascript', wasmUrl?: string): Promise<TreeSitterHighlighter> {
+  static async create(language: string = 'javascript', wasmUrl?: string, scmUrl?: string): Promise<TreeSitterHighlighter> {
     const highlighter = new TreeSitterHighlighter(language);
-    await highlighter.ready(wasmUrl);
+    await highlighter.ready(wasmUrl, scmUrl);
     return highlighter;
   }
 
@@ -159,7 +224,6 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
   private initParser(language: string): boolean {
     const lang = TreeSitterHighlighter.loadedLanguages.get(language);
     if (!lang) {
-      // Parser cannot activate until language WASM grammar is loaded
       return false;
     }
 
@@ -189,7 +253,12 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
       this.tree = this.parser.parse(source);
       if (!this.tree) return;
 
-      this.collectTokens(this.tree.rootNode, null, buffer);
+      const query = TreeSitterHighlighter.loadedQueries.get(this.currentLanguage);
+      if (query) {
+        this.collectTokensFromQuery(query, this.tree.rootNode, buffer);
+      } else {
+        this.collectTokens(this.tree.rootNode, null, buffer);
+      }
     } catch {
       // In case of parser error, gracefully leave tokens empty
     }
@@ -203,7 +272,46 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
   }
 
   /**
-   * Walk the Tree-sitter CST and collect syntax tokens mapped to editor scopes.
+   * Collect tokens using SCM pattern matches (Helix / Neovim style highlights.scm).
+   */
+  private collectTokensFromQuery(query: Parser.Query, root: Parser.SyntaxNode, buffer: ITextBuffer): void {
+    const captures = query.captures(root);
+    for (const capture of captures) {
+      const tokenType = this.mapCaptureNameToType(capture.name);
+      if (!tokenType) continue;
+
+      const node = capture.node;
+      const startPos = node.startPosition;
+      const endPos = node.endPosition;
+
+      if (startPos.row === endPos.row) {
+        const lineNum = startPos.row + 1;
+        this.pushOrUpdateToken(lineNum, {
+          startIndex: startPos.column,
+          endIndex: endPos.column,
+          type: tokenType
+        });
+      } else {
+        for (let r = startPos.row; r <= endPos.row; r++) {
+          const lineNum = r + 1;
+          const lineLen = buffer.getLineLength(lineNum);
+          const startCol = r === startPos.row ? startPos.column : 0;
+          const endCol = r === endPos.row ? endPos.column : lineLen;
+
+          if (endCol > startCol) {
+            this.pushOrUpdateToken(lineNum, {
+              startIndex: startCol,
+              endIndex: endCol,
+              type: tokenType
+            });
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Walk the Tree-sitter CST and collect syntax tokens (AST Visitor fallback).
    */
   private collectTokens(
     node: Parser.SyntaxNode,
@@ -221,15 +329,13 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
         const endPos = node.endPosition;
 
         if (startPos.row === endPos.row) {
-          // Single-line token
           const lineNum = startPos.row + 1;
-          this.pushToken(lineNum, {
+          this.pushOrUpdateToken(lineNum, {
             startIndex: startPos.column,
             endIndex: endPos.column,
             type: tokenType
           });
         } else {
-          // Multiline token (e.g. block comments, multiline strings)
           for (let r = startPos.row; r <= endPos.row; r++) {
             const lineNum = r + 1;
             const lineLen = buffer.getLineLength(lineNum);
@@ -237,7 +343,7 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
             const endCol = r === endPos.row ? endPos.column : lineLen;
 
             if (endCol > startCol) {
-              this.pushToken(lineNum, {
+              this.pushOrUpdateToken(lineNum, {
                 startIndex: startCol,
                 endIndex: endCol,
                 type: tokenType
@@ -256,20 +362,42 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     }
   }
 
-  private pushToken(lineNumber: number, token: ILineToken): void {
+  private pushOrUpdateToken(lineNumber: number, token: ILineToken): void {
     let list = this.lineTokensMap.get(lineNumber);
     if (!list) {
       list = [];
       this.lineTokensMap.set(lineNumber, list);
     }
-    list.push(token);
+    const existing = list.find(t => t.startIndex === token.startIndex && t.endIndex === token.endIndex);
+    if (existing) {
+      existing.type = token.type;
+    } else {
+      list.push(token);
+    }
+  }
+
+  /**
+   * Map SCM capture names (e.g. 'keyword.control', 'function.method') to theme scopes.
+   */
+  private mapCaptureNameToType(name: string): string | undefined {
+    if (name.startsWith('keyword')) return 'keyword';
+    if (name.startsWith('function') || name === 'constructor') return 'function';
+    if (name.startsWith('string')) return 'string';
+    if (name.startsWith('constant.numeric')) return 'number';
+    if (name.startsWith('constant')) return 'constant';
+    if (name.startsWith('comment')) return 'comment';
+    if (name.startsWith('type')) return 'type';
+    if (name.startsWith('operator')) return 'operator';
+    if (name.startsWith('variable.other.member') || name === 'property') return 'property';
+    if (name.startsWith('variable')) return 'variable';
+    if (name.startsWith('punctuation')) return 'punctuation';
+    return undefined;
   }
 
   /**
    * Map raw Tree-sitter AST node type and parent context to standard theme scope.
    */
   private mapKindToType(kind: string, parent: Parser.SyntaxNode | null): string | undefined {
-    // Check type definition before string/variable
     if (kind === 'type_identifier' || (kind === 'string' && parent?.type === 'predefined_type') || kind === 'predefined_type') {
       return 'type';
     }
