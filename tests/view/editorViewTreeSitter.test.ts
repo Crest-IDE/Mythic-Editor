@@ -133,4 +133,30 @@ describe('EditorView with Tree-sitter Integration', () => {
     expect(line1Tokens).toBeDefined();
     expect(line1Tokens!.some(t => t.type === 'keyword')).toBe(true);
   });
+
+  it('updates syntax highlighting tokens immediately while typing live code (e.g. print(""))', () => {
+    const mount = new MockElement();
+    const buffer = new PieceTreeTextBuffer('', '\n');
+
+    const highlighter = new TreeSitterHighlighter('python');
+    const editor = new EditorView(mount as any, buffer, {
+      tokensProvider: highlighter
+    });
+
+    // Type 'print("hello")' character by character
+    const code = 'print("hello")';
+    for (const ch of code) {
+      editor.typeText(ch);
+    }
+
+    const provider = editor.getTokensProvider();
+    expect(provider).toBeInstanceOf(TreeSitterHighlighter);
+
+    const line1Tokens = provider!.getLineTokens(1);
+    expect(line1Tokens).toBeDefined();
+    expect(line1Tokens!.length).toBeGreaterThan(0);
+    // Should capture 'print' as function or variable and '"hello"' as string
+    expect(line1Tokens!.some(t => t.type === 'function' || t.type === 'variable')).toBe(true);
+    expect(line1Tokens!.some(t => t.type === 'string')).toBe(true);
+  });
 });

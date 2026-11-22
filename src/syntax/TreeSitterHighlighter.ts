@@ -280,7 +280,10 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
   setLanguage(language: string): boolean {
     if (this.currentLanguage !== language) {
       this.currentLanguage = language;
-      this.tree = null;
+      if (this.tree) {
+        try { this.tree.delete(); } catch (_) {}
+        this.tree = null;
+      }
     }
     return this.initParser(language);
   }
@@ -321,8 +324,11 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     if (!source) return;
 
     try {
-      // Incremental parse using previous tree when available for maximum performance
-      this.tree = this.parser.parse(source, this.tree || undefined);
+      if (this.tree) {
+        try { this.tree.delete(); } catch (_) {}
+        this.tree = null;
+      }
+      this.tree = this.parser.parse(source);
       if (!this.tree) return;
 
       const query = TreeSitterHighlighter.loadedQueries.get(this.currentLanguage);
