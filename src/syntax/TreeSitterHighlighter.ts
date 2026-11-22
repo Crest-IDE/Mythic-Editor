@@ -44,6 +44,83 @@ function getBaseUrl(): string {
   return './';
 }
 
+/**
+ * Universal binary asset loader:
+ * Works in Browser (HTTP 200), Node/Vitest (fs), and Android WebView (file:/// via XMLHttpRequest with status 0).
+ */
+async function fetchBinaryAsset(url: string): Promise<Uint8Array> {
+  if (typeof window === 'undefined' && typeof document === 'undefined') {
+    try {
+      const fsModuleName = 'fs';
+      const fs = await import(/* @vite-ignore */ fsModuleName);
+      if (fs.existsSync(url)) {
+        const buffer = fs.readFileSync(url);
+        return new Uint8Array(buffer);
+      }
+    } catch {
+      // Fall through
+    }
+  }
+
+  if (typeof XMLHttpRequest !== 'undefined') {
+    return new Promise<Uint8Array>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = () => {
+        if (xhr.status === 200 || (xhr.status === 0 && xhr.response)) {
+          resolve(new Uint8Array(xhr.response));
+        } else {
+          reject(new Error(`XHR failed for ${url} (status: ${xhr.status})`));
+        }
+      };
+      xhr.onerror = () => reject(new Error(`XHR network error for ${url}`));
+      xhr.send(null);
+    });
+  }
+
+  const res = await fetch(url);
+  const buf = await res.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/**
+ * Universal text asset loader (for SCM queries):
+ * Works in Browser, Node/Vitest, and Android WebView (file:/// via XMLHttpRequest with status 0).
+ */
+async function fetchTextAsset(url: string): Promise<string> {
+  if (typeof window === 'undefined' && typeof document === 'undefined') {
+    try {
+      const fsModuleName = 'fs';
+      const fs = await import(/* @vite-ignore */ fsModuleName);
+      if (fs.existsSync(url)) {
+        return fs.readFileSync(url, 'utf8');
+      }
+    } catch {
+      // Fall through
+    }
+  }
+
+  if (typeof XMLHttpRequest !== 'undefined') {
+    return new Promise<string>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onload = () => {
+        if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText)) {
+          resolve(xhr.responseText);
+        } else {
+          reject(new Error(`XHR failed for ${url} (status: ${xhr.status})`));
+        }
+      };
+      xhr.onerror = () => reject(new Error(`XHR network error for ${url}`));
+      xhr.send(null);
+    });
+  }
+
+  const res = await fetch(url);
+  return await res.text();
+}
+
 export class TreeSitterHighlighter implements ILineTokensProvider {
   private static isInitialized = false;
   private static initPromise: Promise<void> | null = null;
@@ -110,7 +187,8 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
 
       const target = wasmPathOrUrl || defaultPath();
       try {
-        lang = await Parser.Language.load(target);
+        const wasmBytes = await fetchBinaryAsset(target);
+        lang = await Parser.Language.load(wasmBytes);
         TreeSitterHighlighter.loadedLanguages.set(name, lang);
       } catch (err) {
         console.warn(`[TreeSitterHighlighter] Failed to load language grammar '${name}' from ${target}:`, err);
@@ -139,27 +217,14 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
 
     try {
       let scmText = '';
-      if (typeof window !== 'undefined' || typeof document !== 'undefined') {
-        const url = scmPathOrUrl || `${getBaseUrl()}queries/${name}.scm`;
-        const res = await fetch(url);
-        if (res.ok) {
-          scmText = await res.text();
-        }
-      } else {
-        // Node / Vitest environment
-        try {
-          const fsModuleName = 'fs';
-          const fs = await import(/* @vite-ignore */ fsModuleName);
-          const p = scmPathOrUrl || `./public/queries/${name}.scm`;
-          if (fs.existsSync(p)) {
-            scmText = fs.readFileSync(p, 'utf8');
-          }
-        } catch {
-          // Fallback gracefully
-        }
+      const url = scmPathOrUrl || `${getBaseUrl()}queries/${name}.scm`;
+      try {
+        scmText = await fetchTextAsset(url);
+      } catch (e) {
+        // Fallback or ignore if query missing
       }
 
-      if (scmText) {
+      if (scmText && scmText.trim().length > 0) {
         const query = lang.query(scmText);
         TreeSitterHighlighter.loadedQueries.set(name, query);
         return query;
