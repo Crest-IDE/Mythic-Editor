@@ -8,6 +8,9 @@
   --mythic-editor-bg: #282c34;
   --mythic-editor-fg: #abb2bf;
   --mythic-selection-bg: #3e4451;
+  --mythic-line-highlight-bg: #2c313a;
+  --mythic-line-highlight-inactive-bg: rgba(255, 255, 255, 0.02);
+  --mythic-line-highlight-border: #383e4a;
   --mythic-cursor-color: #528bff;
   --mythic-gutter-bg: #282c34;
   --mythic-gutter-fg: #495162;
@@ -74,6 +77,11 @@
 
 .mythic-line-number.active {
   color: var(--mythic-gutter-active-fg, #abb2bf);
+  background-color: var(--mythic-line-highlight-bg, #2c313a);
+}
+
+.mythic-gutter.inactive .mythic-line-number.active {
+  background-color: var(--mythic-line-highlight-inactive-bg, rgba(255, 255, 255, 0.02));
 }
 
 /* Lines Layer (Unclipped to prevent scroll clipping / disappearing lines) */
@@ -85,12 +93,30 @@
   user-select: text;
 }
 
+/* Current Line Highlight (VS Code active line highlight overlay) */
+.mythic-current-line-highlight {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  min-width: 100%;
+  background-color: var(--mythic-line-highlight-bg, #2c313a);
+  pointer-events: none;
+  z-index: 1;
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+.mythic-current-line-highlight.inactive {
+  background-color: var(--mythic-line-highlight-inactive-bg, rgba(255, 255, 255, 0.02));
+}
+
 .mythic-view-line {
   position: absolute;
   left: 0;
   right: 0;
   white-space: pre;
   tab-size: 4;
+  z-index: 2;
 }
 
 /* Selection Layer */

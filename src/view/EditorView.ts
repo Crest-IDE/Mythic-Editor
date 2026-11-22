@@ -15,6 +15,7 @@ import { RenderedLinesCollection, ILineTokensProvider } from './RenderedLinesCol
 import { ViewGutter } from './ViewGutter';
 import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
+import { ViewCurrentLineHighlight, LineHighlightMode } from './ViewCurrentLineHighlight';
 import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
 import { EditStack } from '../core/model/EditStack';
@@ -30,6 +31,7 @@ export interface IEditorOptions {
   languageId?: string;
   filename?: string;
   tokensProvider?: ILineTokensProvider;
+  renderLineHighlight?: LineHighlightMode;
   onDidChangeContent?: (buffer: ITextBuffer) => void;
   onSave?: (content: string) => void;
 }
@@ -49,10 +51,12 @@ export class EditorView {
   private gutter: ViewGutter;
   private cursor: ViewCursor;
   private selectionOverlay: ViewSelection;
+  private lineHighlight: ViewCurrentLineHighlight;
   private inputController: InputController;
 
   private selection: Selection = new Selection(1, 1, 1, 1);
   private isPointerDown: boolean = false;
+  private isFocused: boolean = true;
   private selectionAnchor: Position = new Position(1, 1);
   private maxLineWidth: number = 0;
   private editStack: EditStack = new EditStack();
@@ -105,6 +109,7 @@ export class EditorView {
     this.linesCollection = new RenderedLinesCollection(this.linesContent, this.viewport, initialTokensProvider);
     this.cursor = new ViewCursor(this.viewport);
     this.selectionOverlay = new ViewSelection(this.viewport);
+    this.lineHighlight = new ViewCurrentLineHighlight(this.viewport, options.renderLineHighlight ?? 'all');
 
     // Input Controller
     this.inputController = new InputController(this.viewport, {
@@ -120,6 +125,7 @@ export class EditorView {
     });
 
     // Assemble DOM
+    this.linesContent.appendChild(this.lineHighlight.element);
     this.linesContent.appendChild(this.selectionOverlay.container);
     this.linesContent.appendChild(this.cursor.element);
     this.linesContent.appendChild(this.inputController.textArea);
@@ -271,11 +277,30 @@ export class EditorView {
   }
 
   focus(): void {
+    this.isFocused = true;
     this.inputController.focus();
+    this.updateLineHighlightState();
   }
 
   blur(): void {
+    this.isFocused = false;
     this.inputController.blur();
+    this.updateLineHighlightState();
+  }
+
+  private updateLineHighlightState(): void {
+    const pos = this.selection.getPosition();
+    this.lineHighlight.update(pos.lineNumber, this.selection.isEmpty(), this.isFocused);
+    if (this.isFocused) {
+      this.gutter.container.classList.remove('inactive');
+    } else {
+      this.gutter.container.classList.add('inactive');
+    }
+  }
+
+  private shouldRenderGutterHighlight(): boolean {
+    const mode = this.lineHighlight.getMode();
+    return mode === 'all' || mode === 'gutter';
   }
 
   getSelection(): Selection {
@@ -302,8 +327,9 @@ export class EditorView {
     this.gutter.update(
       this.viewport.getVisibleLines(this.buffer.getLineCount()).startLineNumber,
       this.viewport.getVisibleLines(this.buffer.getLineCount()).endLineNumber,
-      newSelection.positionLineNumber
+      this.shouldRenderGutterHighlight() ? pos.lineNumber : undefined
     );
+    this.lineHighlight.update(pos.lineNumber, newSelection.isEmpty(), this.isFocused);
   }
 
   typeText(text: string): void {
@@ -398,6 +424,9 @@ export class EditorView {
 
   updateOptions(newOptions: Partial<IEditorOptions>): void {
     this.options = { ...this.options, ...newOptions };
+    if (newOptions.renderLineHighlight !== undefined) {
+      this.setRenderLineHighlight(newOptions.renderLineHighlight);
+    }
     if (newOptions.fontFamily || newOptions.fontSize || newOptions.lineHeight) {
       this.metrics = FontMetrics.measure(
         this.options.fontFamily ?? 'ui-monospace, SFMono-Regular, Menlo, monospace',
@@ -424,6 +453,7 @@ export class EditorView {
     const height = rect.height || this.rootElement.clientHeight || 600;
     this.viewport.setDimensions(width, height);
     this.updateCanvasHeight();
+    this.lineHighlight?.updateWidth(Math.max(this.maxLineWidth, this.viewport.width));
   }
 
   private computeMaxLineWidth(): number {
@@ -478,13 +508,19 @@ export class EditorView {
     }
 
     this.linesCollection.update(visible.startLineNumber, visible.endLineNumber, this.buffer);
-    this.gutter.update(visible.startLineNumber, visible.endLineNumber, this.selection.positionLineNumber);
+    this.gutter.update(
+      visible.startLineNumber,
+      visible.endLineNumber,
+      this.shouldRenderGutterHighlight() ? this.selection.positionLineNumber : undefined
+    );
     this.selectionOverlay.update(this.selection, this.buffer, (line, col) => this.linesCollection.getHorizontalOffset(line, col));
     const pos = this.selection.getPosition();
     const lineContent = this.buffer.getLineContent(pos.lineNumber);
     const pixelLeft = this.getPixelOffsetForPosition(pos);
     this.cursor.updatePosition(pos, lineContent, pixelLeft);
     this.inputController.updatePosition(pos, lineContent, pixelLeft);
+    this.lineHighlight.update(pos.lineNumber, this.selection.isEmpty(), this.isFocused);
+    this.lineHighlight.updateWidth(Math.max(this.maxLineWidth, this.viewport.width));
   }
 
   private bindEvents(): void {
@@ -614,6 +650,38 @@ export class EditorView {
       this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
       this.inputController.focus();
     });
+
+    this.inputController.textArea.addEventListener('focus', () => {
+      this.isFocused = true;
+      this.updateLineHighlightState();
+    });
+
+    this.inputController.textArea.addEventListener('blur', () => {
+      this.isFocused = false;
+      this.updateLineHighlightState();
+    });
+  }
+
+  // --- Public Current Line Highlight API (VS Code Port) ---
+  getRenderLineHighlight(): LineHighlightMode {
+    return this.lineHighlight.getMode();
+  }
+
+  setRenderLineHighlight(mode: LineHighlightMode): void {
+    this.options.renderLineHighlight = mode;
+    this.lineHighlight.setMode(mode);
+    const pos = this.selection.getPosition();
+    this.lineHighlight.update(pos.lineNumber, this.selection.isEmpty(), this.isFocused);
+    const visible = this.viewport.getVisibleLines(this.buffer.getLineCount());
+    this.gutter.update(
+      visible.startLineNumber,
+      visible.endLineNumber,
+      this.shouldRenderGutterHighlight() ? pos.lineNumber : undefined
+    );
+  }
+
+  getLineHighlight(): ViewCurrentLineHighlight {
+    return this.lineHighlight;
   }
 
   // --- Public Undo / Redo API (Monaco Port) ---

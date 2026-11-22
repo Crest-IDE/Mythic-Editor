@@ -50,8 +50,12 @@ export class FontMetrics {
     container.appendChild(testElement);
     document.body.appendChild(container);
 
-    const measuredWidth = testElement.offsetWidth / 256;
-    const measuredHeight = testElement.offsetHeight;
+    const measuredWidth = (typeof testElement.offsetWidth === 'number' && !isNaN(testElement.offsetWidth))
+      ? testElement.offsetWidth / 256
+      : 0;
+    const measuredHeight = (typeof testElement.offsetHeight === 'number' && !isNaN(testElement.offsetHeight))
+      ? testElement.offsetHeight
+      : 0;
 
     document.body.removeChild(container);
 
