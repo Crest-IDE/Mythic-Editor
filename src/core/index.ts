@@ -4,3 +4,4 @@
 
 export * from './model';
 export * from './buffer';
+export * from './language';

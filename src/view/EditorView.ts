@@ -19,12 +19,15 @@ import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
 import { EditStack } from '../core/model/EditStack';
 import { TextChange } from '../core/model/TextChange';
+import { LanguageConfigurationRegistry } from '../core/language/LanguageConfigurationRegistry';
 import './editor.css';
 
 export interface IEditorOptions {
   fontSize?: number;
   fontFamily?: string;
   lineHeight?: number;
+  languageId?: string;
+  filename?: string;
   tokensProvider?: ILineTokensProvider;
   onDidChangeContent?: (buffer: ITextBuffer) => void;
   onSave?: (content: string) => void;
@@ -52,10 +55,18 @@ export class EditorView {
   private selectionAnchor: Position = new Position(1, 1);
   private maxLineWidth: number = 0;
   private editStack: EditStack = new EditStack();
+  private languageId: string = 'plaintext';
 
   constructor(targetElement: HTMLElement, buffer: ITextBuffer, options: IEditorOptions = {}) {
     this.buffer = buffer;
     this.options = options;
+
+    const registry = LanguageConfigurationRegistry.getInstance();
+    if (options.filename) {
+      this.languageId = registry.getLanguageIdByFilename(options.filename);
+    } else if (options.languageId || (options as any).language) {
+      this.languageId = options.languageId || (options as any).language;
+    }
 
     // 1. Measure Font
     this.metrics = FontMetrics.measure(
@@ -161,15 +172,87 @@ export class EditorView {
     this.linesCollection.refresh(this.buffer);
   }
 
-  setLanguage(language: string): void {
+  setLanguage(langOrFilename: string): void {
+    const registry = LanguageConfigurationRegistry.getInstance();
+    const resolvedLang = langOrFilename.includes('.')
+      ? registry.getLanguageIdByFilename(langOrFilename)
+      : langOrFilename;
+
+    this.languageId = resolvedLang;
+    const grammarName = registry.getGrammarName(resolvedLang);
+
     const currentProvider = this.linesCollection.getTokensProvider();
     if (currentProvider && 'setLanguage' in currentProvider && typeof (currentProvider as any).setLanguage === 'function') {
-      (currentProvider as any).setLanguage(language);
+      (currentProvider as any).setLanguage(grammarName);
       if ('update' in currentProvider && typeof (currentProvider as any).update === 'function') {
         (currentProvider as any).update(this.buffer);
       }
       this.linesCollection.refresh(this.buffer);
     }
+  }
+
+  getLanguageId(): string {
+    return this.languageId;
+  }
+
+  toggleLineComment(): boolean {
+    const registry = LanguageConfigurationRegistry.getInstance();
+    const comments = registry.getComments(this.languageId);
+    const token = comments?.lineComment;
+    if (!token) return false;
+
+    const prefix = token.endsWith(' ') ? token : token + ' ';
+    const startLine = Math.min(this.selection.selectionStartLineNumber, this.selection.positionLineNumber);
+    const endLine = Math.max(this.selection.selectionStartLineNumber, this.selection.positionLineNumber);
+
+    let allCommented = true;
+    for (let line = startLine; line <= endLine; line++) {
+      const content = this.buffer.getLineContent(line);
+      const trimmed = content.trimStart();
+      if (trimmed.length > 0 && !trimmed.startsWith(token)) {
+        allCommented = false;
+        break;
+      }
+    }
+
+    this.editStack.pushStackElement();
+
+    for (let line = startLine; line <= endLine; line++) {
+      const content = this.buffer.getLineContent(line);
+      const startOffset = this.buffer.getOffsetAt(new Position(line, 1));
+
+      if (allCommented) {
+        const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const match = content.match(new RegExp(`^(\\s*)${escaped}\\s?`));
+        if (match) {
+          const deleteLen = match[0].length - match[1].length;
+          const deleteOffset = startOffset + match[1].length;
+          this.buffer.delete(deleteOffset, deleteLen);
+          this.editStack.pushEdit(
+            this.selection,
+            this.selection,
+            new TextChange(deleteOffset, match[0].slice(match[1].length), deleteOffset, '')
+          );
+        }
+      } else {
+        const match = content.match(/^(\s*)/);
+        const indentLen = match ? match[1].length : 0;
+        const insertOffset = startOffset + indentLen;
+        this.buffer.insert(insertOffset, prefix);
+        this.editStack.pushEdit(
+          this.selection,
+          this.selection,
+          new TextChange(insertOffset, '', insertOffset, prefix)
+        );
+      }
+    }
+
+    this.editStack.pushStackElement();
+    this.updateCanvasHeight();
+    this.refreshLines();
+    this.render();
+    this.options.onDidChangeContent?.(this.buffer);
+    return true;
   }
 
   getTokensProvider(): ILineTokensProvider | null {

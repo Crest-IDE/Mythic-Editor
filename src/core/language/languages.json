@@ -1,0 +1,3776 @@
+[
+  {
+    "id": "rust",
+    "extensions": [
+      "rs"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "rust"
+  },
+  {
+    "id": "sway",
+    "extensions": [
+      "sw"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "sway"
+  },
+  {
+    "id": "toml",
+    "extensions": [
+      "toml"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "toml"
+  },
+  {
+    "id": "awk",
+    "extensions": [
+      "awk",
+      "gawk",
+      "nawk",
+      "mawk"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "awk"
+  },
+  {
+    "id": "protobuf",
+    "extensions": [
+      "proto"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "proto"
+  },
+  {
+    "id": "textproto",
+    "extensions": [
+      "txtpb",
+      "textpb",
+      "textproto"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "textproto"
+  },
+  {
+    "id": "eiffel",
+    "extensions": [
+      "e"
+    ],
+    "lineComment": "--",
+    "grammar": "eiffel"
+  },
+  {
+    "id": "elixir",
+    "extensions": [
+      "ex",
+      "exs"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "elixir"
+  },
+  {
+    "id": "fennel",
+    "extensions": [
+      "fnl",
+      "fnlm"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "fennel"
+  },
+  {
+    "id": "fish",
+    "extensions": [
+      "fish"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "fish"
+  },
+  {
+    "id": "flatbuffers",
+    "extensions": [
+      "fbs"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "flatbuffers"
+  },
+  {
+    "id": "mint",
+    "extensions": [
+      "mint"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "mint"
+  },
+  {
+    "id": "mojo",
+    "extensions": [
+      "mojo",
+      "🔥"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "mojo"
+  },
+  {
+    "id": "janet",
+    "extensions": [
+      "cgen",
+      "janet",
+      "jdn"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "janet-simple"
+  },
+  {
+    "id": "json",
+    "extensions": [
+      "json",
+      "arb",
+      "ipynb",
+      "geojson",
+      "gltf",
+      "webmanifest",
+      "js.map",
+      "ts.map",
+      "css.map",
+      "jsonl",
+      "avsc",
+      "ldtk",
+      "ldtkl",
+      "sublime-build",
+      "sublime-color-scheme",
+      "sublime-commands",
+      "sublime-completions",
+      "sublime-keymap",
+      "sublime-macro",
+      "sublime-menu",
+      "sublime-mousemap",
+      "sublime-project",
+      "sublime-settings",
+      "sublime-theme",
+      "sublime-workspace",
+      "code-workspace",
+      "# https://deno.com/\n  \"tfstate",
+      "# e.g. terraform.tfstate.backup"
+    ],
+    "tabSize": 2,
+    "grammar": "json"
+  },
+  {
+    "id": "jsonc",
+    "extensions": [
+      "jsonc",
+      "j}sconfig.json\" }"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "json"
+  },
+  {
+    "id": "json-ld",
+    "extensions": [
+      "jsonld"
+    ],
+    "tabSize": 2,
+    "grammar": "json"
+  },
+  {
+    "id": "json5",
+    "extensions": [
+      "json5"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "json5"
+  },
+  {
+    "id": "c",
+    "extensions": [
+      "c"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "c"
+  },
+  {
+    "id": "cpp",
+    "extensions": [
+      "cc",
+      "hh",
+      "c++",
+      "cpp",
+      "hpp",
+      "h",
+      "ipp",
+      "tpp",
+      "cxx",
+      "hxx",
+      "ixx",
+      "txx",
+      "ino",
+      "C",
+      "H",
+      "cu",
+      "cuh",
+      "cppm",
+      "h++",
+      "ii",
+      "inl"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "cpp"
+  },
+  {
+    "id": "crystal",
+    "extensions": [
+      "cr"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "crystal"
+  },
+  {
+    "id": "c-sharp",
+    "extensions": [
+      "cs",
+      "csx",
+      "cake"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "c-sharp"
+  },
+  {
+    "id": "c3",
+    "extensions": [
+      "c3",
+      "c3i",
+      "c3t"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "c3"
+  },
+  {
+    "id": "cel",
+    "extensions": [
+      "cel"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "cel"
+  },
+  {
+    "id": "spicedb",
+    "extensions": [
+      "zed"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "spicedb"
+  },
+  {
+    "id": "go",
+    "extensions": [
+      "go"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "go"
+  },
+  {
+    "id": "gomod",
+    "extensions": [],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "gomod"
+  },
+  {
+    "id": "gotmpl",
+    "extensions": [
+      "gotmpl"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "gotmpl"
+  },
+  {
+    "id": "gowork",
+    "extensions": [],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "gowork"
+  },
+  {
+    "id": "go-format-string",
+    "extensions": [],
+    "grammar": "go-format-string"
+  },
+  {
+    "id": "javascript",
+    "extensions": [
+      "js",
+      "mjs",
+      "cjs",
+      "rules",
+      "es6",
+      "pac",
+      "gs"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "javascript"
+  },
+  {
+    "id": "jsx",
+    "extensions": [
+      "jsx"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "javascript"
+  },
+  {
+    "id": "typescript",
+    "extensions": [
+      "ts",
+      "mts",
+      "cts"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "typescript"
+  },
+  {
+    "id": "typespec",
+    "extensions": [
+      "tsp"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "typespec"
+  },
+  {
+    "id": "tsx",
+    "extensions": [
+      "tsx"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "tsx"
+  },
+  {
+    "id": "css",
+    "extensions": [
+      "css"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "css"
+  },
+  {
+    "id": "scss",
+    "extensions": [
+      "scss"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "scss"
+  },
+  {
+    "id": "less",
+    "extensions": [
+      "less"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "less"
+  },
+  {
+    "id": "html",
+    "extensions": [
+      "html",
+      "htm",
+      "shtml",
+      "xhtml",
+      "xht",
+      "jsp",
+      "asp",
+      "aspx",
+      "jshtm",
+      "volt",
+      "rhtml",
+      "cshtml"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "html"
+  },
+  {
+    "id": "htmldjango",
+    "extensions": [],
+    "grammar": "htmldjango"
+  },
+  {
+    "id": "python",
+    "extensions": [
+      "py",
+      "pyi",
+      "py3",
+      "pyw",
+      "ptl",
+      "rpy",
+      "cpy",
+      "ipy",
+      "pyt"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "python"
+  },
+  {
+    "id": "nickel",
+    "extensions": [
+      "ncl"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "nickel"
+  },
+  {
+    "id": "nix",
+    "extensions": [
+      "nix"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "nix"
+  },
+  {
+    "id": "ruby",
+    "extensions": [
+      "rb",
+      "rake",
+      "irb",
+      "gemspec",
+      "rabl",
+      "jbuilder",
+      "jb",
+      "podspec",
+      "rjs",
+      "rbi",
+      "rbs",
+      "# https://github.com/simplecov-ruby/simplecov"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "ruby"
+  },
+  {
+    "id": "rshtml",
+    "extensions": [],
+    "tabSize": 2,
+    "grammar": "rshtml"
+  },
+  {
+    "id": "bash",
+    "extensions": [
+      "sh",
+      "bash",
+      "ash",
+      "dash",
+      "ksh",
+      "mksh",
+      "zsh",
+      "zshenv",
+      "zlogin",
+      "zlogout",
+      "zprofile",
+      "zshrc",
+      "eclass",
+      "ebuild",
+      "bazelrc",
+      "Renviron",
+      "zsh-theme",
+      "cshrc",
+      "tcshrc",
+      "bashrc_Apple_Terminal",
+      "zshrc_Apple_Terminal",
+      "# ~/.config/direnv/direnvrc"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "bash"
+  },
+  {
+    "id": "php",
+    "extensions": [
+      "php",
+      "inc",
+      "php4",
+      "php5",
+      "phtml",
+      "ctp"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/**",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "php"
+  },
+  {
+    "id": "php-only",
+    "extensions": [],
+    "tabSize": 4,
+    "grammar": "php-only"
+  },
+  {
+    "id": "blade",
+    "extensions": [
+      "blade"
+    ],
+    "grammar": "blade"
+  },
+  {
+    "id": "twig",
+    "extensions": [
+      "twig"
+    ],
+    "blockComment": [
+      "{#",
+      "#}"
+    ],
+    "tabSize": 2,
+    "grammar": "twig"
+  },
+  {
+    "id": "latex",
+    "extensions": [
+      "tex",
+      "dtx",
+      "ins",
+      "sty",
+      "cls",
+      "Rd",
+      "bbx",
+      "cbx"
+    ],
+    "lineComment": "%",
+    "tabSize": 4,
+    "grammar": "latex"
+  },
+  {
+    "id": "bibtex",
+    "extensions": [
+      "bib"
+    ],
+    "lineComment": "%",
+    "tabSize": 4,
+    "grammar": "bibtex"
+  },
+  {
+    "id": "lean",
+    "extensions": [
+      "lean"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "/-",
+      "-/"
+    ],
+    "tabSize": 2,
+    "grammar": "lean"
+  },
+  {
+    "id": "lpf",
+    "extensions": [
+      "lpf"
+    ],
+    "lineComment": "#",
+    "grammar": "lpf"
+  },
+  {
+    "id": "julia",
+    "extensions": [
+      "jl"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "#=",
+      "=#"
+    ],
+    "tabSize": 4,
+    "grammar": "julia"
+  },
+  {
+    "id": "java",
+    "extensions": [
+      "java",
+      "jav",
+      "pde"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "java"
+  },
+  {
+    "id": "smali",
+    "extensions": [
+      "smali"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "smali"
+  },
+  {
+    "id": "ledger",
+    "extensions": [
+      "ldg",
+      "ledger",
+      "journal"
+    ],
+    "lineComment": ";",
+    "tabSize": 4,
+    "grammar": "ledger"
+  },
+  {
+    "id": "beancount",
+    "extensions": [
+      "beancount",
+      "bean"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "beancount"
+  },
+  {
+    "id": "ocaml",
+    "extensions": [
+      "ml"
+    ],
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 2,
+    "grammar": "ocaml"
+  },
+  {
+    "id": "ocaml-interface",
+    "extensions": [
+      "mli"
+    ],
+    "lineComment": "(**)",
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 2,
+    "grammar": "ocaml-interface"
+  },
+  {
+    "id": "dune",
+    "extensions": [],
+    "lineComment": ";",
+    "tabSize": 1,
+    "grammar": "scheme"
+  },
+  {
+    "id": "lua",
+    "extensions": [
+      "lua",
+      "rockspec"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "--[[",
+      "--]]"
+    ],
+    "tabSize": 2,
+    "grammar": "lua"
+  },
+  {
+    "id": "luap",
+    "extensions": [],
+    "grammar": "luap"
+  },
+  {
+    "id": "lua-format-string",
+    "extensions": [],
+    "grammar": "lua-format-string"
+  },
+  {
+    "id": "teal",
+    "extensions": [
+      "tl"
+    ],
+    "blockComment": [
+      "--[[",
+      "--]]"
+    ],
+    "grammar": "teal"
+  },
+  {
+    "id": "svelte",
+    "extensions": [
+      "svelte"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "svelte"
+  },
+  {
+    "id": "vue",
+    "extensions": [
+      "vue"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "vue"
+  },
+  {
+    "id": "yaml",
+    "extensions": [
+      "yml",
+      "yaml",
+      "sublime-syntax",
+      "bu",
+      "# https://bundler.io/v4.0/man/bundle-config.1.html"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "yaml"
+  },
+  {
+    "id": "nestedtext",
+    "extensions": [
+      "nt"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "yaml"
+  },
+  {
+    "id": "haskell",
+    "extensions": [
+      "hs",
+      "hs-boot",
+      "hsc"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 2,
+    "grammar": "haskell"
+  },
+  {
+    "id": "haskell-persistent",
+    "extensions": [
+      "persistentmodels"
+    ],
+    "lineComment": "--",
+    "tabSize": 2,
+    "grammar": "haskell-persistent"
+  },
+  {
+    "id": "haskell-literate",
+    "extensions": [
+      "lhs"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 2,
+    "grammar": "haskell-literate"
+  },
+  {
+    "id": "purescript",
+    "extensions": [
+      "purs"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 2,
+    "grammar": "purescript"
+  },
+  {
+    "id": "zig",
+    "extensions": [
+      "zig",
+      "zon"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "zig"
+  },
+  {
+    "id": "picat",
+    "extensions": [
+      "pi",
+      "picat"
+    ],
+    "lineComment": "%",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "picat"
+  },
+  {
+    "id": "prolog",
+    "extensions": [
+      "pl",
+      "prolog"
+    ],
+    "lineComment": "%",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "grammar": "prolog"
+  },
+  {
+    "id": "tsq",
+    "extensions": [],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "query"
+  },
+  {
+    "id": "cmake",
+    "extensions": [
+      "cmake"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "#[[",
+      "]]"
+    ],
+    "tabSize": 2,
+    "grammar": "cmake"
+  },
+  {
+    "id": "make",
+    "extensions": [
+      "make",
+      "mk",
+      "mak"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "make"
+  },
+  {
+    "id": "glsl",
+    "extensions": [
+      "glsl",
+      "vert",
+      "tesc",
+      "tese",
+      "geom",
+      "frag",
+      "comp"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "glsl"
+  },
+  {
+    "id": "penrose",
+    "extensions": [
+      "substance",
+      "style",
+      "domain"
+    ],
+    "tabSize": 2,
+    "grammar": "penrose"
+  },
+  {
+    "id": "perl",
+    "extensions": [
+      "pl",
+      "pm",
+      "t",
+      "psgi",
+      "raku",
+      "rakumod",
+      "rakutest",
+      "rakudoc",
+      "nqp",
+      "p6",
+      "pl6",
+      "pm6"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "perl"
+  },
+  {
+    "id": "embedded-perl",
+    "extensions": [
+      "ep"
+    ],
+    "lineComment": "%#",
+    "tabSize": 2,
+    "grammar": "embedded-perl"
+  },
+  {
+    "id": "pod",
+    "extensions": [
+      "pod"
+    ],
+    "grammar": "pod"
+  },
+  {
+    "id": "racket",
+    "extensions": [
+      "rkt",
+      "rktd",
+      "rktl",
+      "scrbl",
+      "zuo"
+    ],
+    "lineComment": ";",
+    "blockComment": [
+      "#|",
+      "|#"
+    ],
+    "tabSize": 2,
+    "grammar": "scheme"
+  },
+  {
+    "id": "common-lisp",
+    "extensions": [
+      "lisp",
+      "asd",
+      "cl",
+      "l",
+      "lsp",
+      "ny",
+      "podsl",
+      "ros",
+      "sexp"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "commonlisp"
+  },
+  {
+    "id": "comment",
+    "extensions": [],
+    "grammar": "comment"
+  },
+  {
+    "id": "wesl",
+    "extensions": [
+      "wesl"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "wesl"
+  },
+  {
+    "id": "wgsl",
+    "extensions": [
+      "wgsl"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "wgsl"
+  },
+  {
+    "id": "llvm",
+    "extensions": [
+      "ll"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "llvm"
+  },
+  {
+    "id": "llvm-mir",
+    "extensions": [],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "llvm-mir"
+  },
+  {
+    "id": "llvm-mir-yaml",
+    "extensions": [
+      "mir"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "yaml"
+  },
+  {
+    "id": "tablegen",
+    "extensions": [
+      "td"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "tablegen"
+  },
+  {
+    "id": "mail",
+    "extensions": [
+      "eml"
+    ],
+    "grammar": "mail"
+  },
+  {
+    "id": "markdown",
+    "extensions": [
+      "md",
+      "livemd",
+      "markdown",
+      "mdx",
+      "mkd",
+      "mkdn",
+      "mdwn",
+      "mdown",
+      "markdn",
+      "mdtxt",
+      "mdtext",
+      "workbook"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "markdown"
+  },
+  {
+    "id": "markdown-rustdoc",
+    "extensions": [],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "markdown"
+  },
+  {
+    "id": "markdown.inline",
+    "extensions": [],
+    "grammar": "markdown_inline"
+  },
+  {
+    "id": "djot",
+    "extensions": [
+      "dj",
+      "djot"
+    ],
+    "blockComment": [
+      "{%",
+      "%}"
+    ],
+    "tabSize": 2,
+    "grammar": "djot"
+  },
+  {
+    "id": "dart",
+    "extensions": [
+      "dart"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "dart"
+  },
+  {
+    "id": "scala",
+    "extensions": [
+      "scala",
+      "sbt",
+      "sc"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "scala"
+  },
+  {
+    "id": "dockerfile",
+    "extensions": [
+      "Dockerfile",
+      "dockerfile",
+      "Containerfile",
+      "containerfile"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "dockerfile"
+  },
+  {
+    "id": "docker-compose",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "yaml"
+  },
+  {
+    "id": "git-commit",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "gitcommit"
+  },
+  {
+    "id": "git-notes",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "gitcommit"
+  },
+  {
+    "id": "github-action",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "yaml"
+  },
+  {
+    "id": "diff",
+    "extensions": [
+      "diff",
+      "patch",
+      "rej"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "diff"
+  },
+  {
+    "id": "git-rebase",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "git-rebase"
+  },
+  {
+    "id": "regex",
+    "extensions": [
+      "regex"
+    ],
+    "grammar": "regex"
+  },
+  {
+    "id": "git-config",
+    "extensions": [
+      "gitconfig"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "git-config"
+  },
+  {
+    "id": "git-attributes",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "gitattributes"
+  },
+  {
+    "id": "git-ignore",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "gitignore"
+  },
+  {
+    "id": "graphql",
+    "extensions": [
+      "gql",
+      "graphql",
+      "graphqls"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "\\",
+      "\\"
+    ],
+    "tabSize": 2,
+    "grammar": "graphql"
+  },
+  {
+    "id": "elm",
+    "extensions": [
+      "elm"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 4,
+    "grammar": "elm"
+  },
+  {
+    "id": "iex",
+    "extensions": [
+      "iex"
+    ],
+    "lineComment": "#",
+    "grammar": "iex"
+  },
+  {
+    "id": "rescript",
+    "extensions": [
+      "res"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "rescript"
+  },
+  {
+    "id": "erlang",
+    "extensions": [
+      "erl",
+      "hrl",
+      "app"
+    ],
+    "lineComment": "%%",
+    "tabSize": 4,
+    "grammar": "erlang"
+  },
+  {
+    "id": "kotlin",
+    "extensions": [
+      "kt",
+      "kts"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "kotlin"
+  },
+  {
+    "id": "hcl",
+    "extensions": [
+      "hcl",
+      "tf",
+      "nomad"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "hcl"
+  },
+  {
+    "id": "tfvars",
+    "extensions": [
+      "tfvars"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "hcl"
+  },
+  {
+    "id": "org",
+    "extensions": [
+      "org"
+    ],
+    "tabSize": 2,
+    "grammar": "org"
+  },
+  {
+    "id": "solidity",
+    "extensions": [
+      "sol"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "solidity"
+  },
+  {
+    "id": "gleam",
+    "extensions": [
+      "gleam"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "gleam"
+  },
+  {
+    "id": "quarto",
+    "extensions": [
+      "qmd"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "markdown"
+  },
+  {
+    "id": "ron",
+    "extensions": [
+      "ron"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "ron"
+  },
+  {
+    "id": "robot",
+    "extensions": [
+      "robot",
+      "resource"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "robot"
+  },
+  {
+    "id": "r",
+    "extensions": [
+      "r",
+      "R"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "r"
+  },
+  {
+    "id": "rmarkdown",
+    "extensions": [
+      "rmd",
+      "Rmd"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "markdown"
+  },
+  {
+    "id": "swift",
+    "extensions": [
+      "swift",
+      "swiftinterface"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "swift"
+  },
+  {
+    "id": "erb",
+    "extensions": [
+      "erb"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "embedded-template"
+  },
+  {
+    "id": "ejs",
+    "extensions": [
+      "ejs"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "embedded-template"
+  },
+  {
+    "id": "eex",
+    "extensions": [
+      "eex"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "eex"
+  },
+  {
+    "id": "heex",
+    "extensions": [
+      "heex"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "heex"
+  },
+  {
+    "id": "sql",
+    "extensions": [
+      "sql",
+      "dsql"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "sql"
+  },
+  {
+    "id": "gdscript",
+    "extensions": [
+      "gd"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "gdscript"
+  },
+  {
+    "id": "godot-resource",
+    "extensions": [
+      "tscn",
+      "tres",
+      "godot",
+      "gdextension"
+    ],
+    "lineComment": ";",
+    "tabSize": 4,
+    "grammar": "godot-resource"
+  },
+  {
+    "id": "nu",
+    "extensions": [
+      "nu",
+      "nuon"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "nu"
+  },
+  {
+    "id": "vala",
+    "extensions": [
+      "vala",
+      "vapi"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "vala"
+  },
+  {
+    "id": "hare",
+    "extensions": [
+      "ha"
+    ],
+    "lineComment": "//",
+    "tabSize": 8,
+    "grammar": "hare"
+  },
+  {
+    "id": "devicetree",
+    "extensions": [
+      "dts",
+      "dtsi"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "devicetree"
+  },
+  {
+    "id": "cairo",
+    "extensions": [
+      "cairo"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "cairo"
+  },
+  {
+    "id": "cpon",
+    "extensions": [
+      "cpon",
+      "cp"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "cpon"
+  },
+  {
+    "id": "odin",
+    "extensions": [
+      "odin"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "odin"
+  },
+  {
+    "id": "meson",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "meson"
+  },
+  {
+    "id": "ssh_client_config",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "ssh_client_config"
+  },
+  {
+    "id": "scheme",
+    "extensions": [
+      "ss",
+      "scm",
+      "sld"
+    ],
+    "lineComment": ";",
+    "blockComment": [
+      "#|",
+      "|#"
+    ],
+    "tabSize": 2,
+    "grammar": "scheme"
+  },
+  {
+    "id": "v",
+    "extensions": [
+      "v",
+      "vv",
+      "vsh"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "v"
+  },
+  {
+    "id": "verilog",
+    "extensions": [
+      "v",
+      "vh"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "verilog"
+  },
+  {
+    "id": "systemverilog",
+    "extensions": [
+      "sv",
+      "svh"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "systemverilog"
+  },
+  {
+    "id": "edoc",
+    "extensions": [
+      "edoc",
+      "edoc.in"
+    ],
+    "tabSize": 4,
+    "grammar": "edoc"
+  },
+  {
+    "id": "jsdoc",
+    "extensions": [
+      "jsdoc"
+    ],
+    "tabSize": 2,
+    "grammar": "jsdoc"
+  },
+  {
+    "id": "openscad",
+    "extensions": [
+      "scad"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "openscad"
+  },
+  {
+    "id": "prisma",
+    "extensions": [
+      "prisma"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "prisma"
+  },
+  {
+    "id": "clojure",
+    "extensions": [
+      "clj",
+      "cljs",
+      "cljc",
+      "clje",
+      "cljr",
+      "cljx",
+      "edn",
+      "boot"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "clojure"
+  },
+  {
+    "id": "starlark",
+    "extensions": [
+      "bzl",
+      "bazel",
+      "star",
+      "bxl"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "python"
+  },
+  {
+    "id": "elvish",
+    "extensions": [
+      "elv"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "elvish"
+  },
+  {
+    "id": "idris",
+    "extensions": [
+      "idr"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 2,
+    "grammar": "idris"
+  },
+  {
+    "id": "fortran",
+    "extensions": [
+      "f",
+      "for",
+      "f90",
+      "f95",
+      "f03",
+      "F",
+      "F90",
+      "F95",
+      "F03"
+    ],
+    "lineComment": "!",
+    "tabSize": 4,
+    "grammar": "fortran"
+  },
+  {
+    "id": "ungrammar",
+    "extensions": [
+      "ungram",
+      "ungrammar"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "ungrammar"
+  },
+  {
+    "id": "dot",
+    "extensions": [
+      "dot"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "dot"
+  },
+  {
+    "id": "cue",
+    "extensions": [
+      "cue"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "cue"
+  },
+  {
+    "id": "slang",
+    "extensions": [
+      "slang"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "slang"
+  },
+  {
+    "id": "slint",
+    "extensions": [
+      "slint"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "slint"
+  },
+  {
+    "id": "task",
+    "extensions": [
+      "task"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "task"
+  },
+  {
+    "id": "xit",
+    "extensions": [
+      "xit"
+    ],
+    "tabSize": 4,
+    "grammar": "xit"
+  },
+  {
+    "id": "esdl",
+    "extensions": [
+      "gel",
+      "esdl"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "esdl"
+  },
+  {
+    "id": "pascal",
+    "extensions": [
+      "pas",
+      "inc",
+      "lpr",
+      "lfm"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "{",
+      "}"
+    ],
+    "tabSize": 2,
+    "grammar": "pascal"
+  },
+  {
+    "id": "sml",
+    "extensions": [
+      "sml",
+      "sig",
+      "fun"
+    ],
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "grammar": "sml"
+  },
+  {
+    "id": "jsonnet",
+    "extensions": [
+      "libsonnet",
+      "jsonnet"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "jsonnet"
+  },
+  {
+    "id": "ada",
+    "extensions": [
+      "adb",
+      "ads"
+    ],
+    "lineComment": "--",
+    "tabSize": 3,
+    "grammar": "ada"
+  },
+  {
+    "id": "astro",
+    "extensions": [
+      "astro"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "astro"
+  },
+  {
+    "id": "bass",
+    "extensions": [
+      "bass"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "bass"
+  },
+  {
+    "id": "wat",
+    "extensions": [
+      "wat"
+    ],
+    "lineComment": ";;",
+    "blockComment": [
+      "(;",
+      ";)"
+    ],
+    "grammar": "wat"
+  },
+  {
+    "id": "wast",
+    "extensions": [
+      "wast"
+    ],
+    "lineComment": ";;",
+    "blockComment": [
+      "(;",
+      ";)"
+    ],
+    "grammar": "wast"
+  },
+  {
+    "id": "d",
+    "extensions": [
+      "d",
+      "dd"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "d"
+  },
+  {
+    "id": "vhs",
+    "extensions": [
+      "tape"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "vhs"
+  },
+  {
+    "id": "kdl",
+    "extensions": [
+      "kdl"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "grammar": "kdl"
+  },
+  {
+    "id": "xml",
+    "extensions": [
+      "ascx",
+      "atom",
+      "axaml",
+      "axml",
+      "bpmn",
+      "checkstyle",
+      "cpt",
+      "csl",
+      "csproj.user",
+      "dita",
+      "ditamap",
+      "dtml",
+      "fods",
+      "fodt",
+      "fxml",
+      "gir",
+      "glif",
+      "gml",
+      "gpx",
+      "iml",
+      "isml",
+      "itermcolors",
+      "jmx",
+      "kml",
+      "launch",
+      "menu",
+      "mobileconfig",
+      "mpd",
+      "musicxml",
+      "mxml",
+      "ncx",
+      "nuspec",
+      "opml",
+      "osc",
+      "osm",
+      "plist",
+      "policy",
+      "pproj",
+      "pt",
+      "publishsettings",
+      "pubxml",
+      "pubxml.user",
+      "rbxlx",
+      "rbxmx",
+      "resx",
+      "rng",
+      "rss",
+      "shproj",
+      "smil",
+      "storyboard",
+      "sublime-snippet",
+      "svg",
+      "terminal",
+      "tld",
+      "tmx",
+      "ui",
+      "vbproj.user",
+      "vcxproj",
+      "vcxproj.filters",
+      "wixproj",
+      "wsdl",
+      "wxi",
+      "wxs",
+      "xaml",
+      "xbl",
+      "xib",
+      "xlf",
+      "xliff",
+      "xml",
+      "xmp",
+      "xoml",
+      "xpdl",
+      "xrc",
+      "xsd",
+      "xsl",
+      "xul"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "xml"
+  },
+  {
+    "id": "dtd",
+    "extensions": [
+      "dtd",
+      "ent"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "dtd"
+  },
+  {
+    "id": "wit",
+    "extensions": [
+      "wit"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "wit"
+  },
+  {
+    "id": "env",
+    "extensions": [
+      "# https://github.com/firecow/gitlab-ci-local#via-environment-variables"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "bash"
+  },
+  {
+    "id": "systemd",
+    "extensions": [
+      "# Systemd unit files\n  \"service",
+      "automount",
+      "device",
+      "mount",
+      "nspawn",
+      "path",
+      "scope",
+      "slice",
+      "socket",
+      "swap",
+      "target",
+      "timer",
+      "# Podman quadlets\n  \"container",
+      "# extension alone would conflict with Perl POD\n  \"kube",
+      "network",
+      "volume",
+      "build",
+      "image"
+    ],
+    "lineComment": "#",
+    "grammar": "ini"
+  },
+  {
+    "id": "ini",
+    "extensions": [
+      "ini",
+      "desktop",
+      "properties",
+      "cfg",
+      "directory",
+      "# https://aerc-mail.org/"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "ini"
+  },
+  {
+    "id": "inko",
+    "extensions": [
+      "inko"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "inko"
+  },
+  {
+    "id": "bicep",
+    "extensions": [
+      "bicep",
+      "bicepparam"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "bicep"
+  },
+  {
+    "id": "qml",
+    "extensions": [
+      "qml"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "qmljs"
+  },
+  {
+    "id": "mermaid",
+    "extensions": [
+      "mermaid",
+      "mmd"
+    ],
+    "lineComment": "%%",
+    "tabSize": 4,
+    "grammar": "mermaid"
+  },
+  {
+    "id": "matlab",
+    "extensions": [
+      "m"
+    ],
+    "lineComment": "%",
+    "tabSize": 2,
+    "grammar": "matlab"
+  },
+  {
+    "id": "ponylang",
+    "extensions": [
+      "pony"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "ponylang"
+  },
+  {
+    "id": "dhall",
+    "extensions": [
+      "dhall"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 2,
+    "grammar": "dhall"
+  },
+  {
+    "id": "sage",
+    "extensions": [
+      "sage"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "python"
+  },
+  {
+    "id": "msbuild",
+    "extensions": [
+      "proj",
+      "vbproj",
+      "csproj",
+      "fsproj",
+      "targets",
+      "props"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "xml"
+  },
+  {
+    "id": "pem",
+    "extensions": [
+      "pem",
+      "cert",
+      "crt"
+    ],
+    "grammar": "pem"
+  },
+  {
+    "id": "passwd",
+    "extensions": [],
+    "grammar": "passwd"
+  },
+  {
+    "id": "hosts",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "hosts"
+  },
+  {
+    "id": "uxntal",
+    "extensions": [
+      "tal"
+    ],
+    "blockComment": [
+      "(",
+      ")"
+    ],
+    "grammar": "uxntal"
+  },
+  {
+    "id": "yuck",
+    "extensions": [
+      "yuck"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "yuck"
+  },
+  {
+    "id": "prql",
+    "extensions": [
+      "prql"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "prql"
+  },
+  {
+    "id": "po",
+    "extensions": [
+      "po",
+      "pot"
+    ],
+    "lineComment": "#",
+    "grammar": "po"
+  },
+  {
+    "id": "nasm",
+    "extensions": [
+      "asm",
+      "S",
+      "nasm"
+    ],
+    "lineComment": ";",
+    "tabSize": 8,
+    "grammar": "nasm"
+  },
+  {
+    "id": "gas",
+    "extensions": [
+      "s"
+    ],
+    "lineComment": "#",
+    "tabSize": 8,
+    "grammar": "gas"
+  },
+  {
+    "id": "rst",
+    "extensions": [
+      "rst"
+    ],
+    "lineComment": "..",
+    "grammar": "rst"
+  },
+  {
+    "id": "capnp",
+    "extensions": [
+      "capnp"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "capnp"
+  },
+  {
+    "id": "smithy",
+    "extensions": [
+      "smithy"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "smithy"
+  },
+  {
+    "id": "hdl",
+    "extensions": [
+      "hdl"
+    ],
+    "tabSize": 4,
+    "grammar": "hdl"
+  },
+  {
+    "id": "vhdl",
+    "extensions": [
+      "vhd",
+      "vhdl"
+    ],
+    "lineComment": "--",
+    "tabSize": 2,
+    "grammar": "vhdl"
+  },
+  {
+    "id": "rego",
+    "extensions": [
+      "rego"
+    ],
+    "lineComment": "#",
+    "grammar": "rego"
+  },
+  {
+    "id": "nim",
+    "extensions": [
+      "nim",
+      "nims",
+      "nimble"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "#[",
+      "]#"
+    ],
+    "tabSize": 2,
+    "grammar": "nim"
+  },
+  {
+    "id": "cabal",
+    "extensions": [
+      "cabal"
+    ],
+    "lineComment": "--",
+    "tabSize": 2,
+    "grammar": "cabal"
+  },
+  {
+    "id": "hurl",
+    "extensions": [
+      "hurl"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "hurl"
+  },
+  {
+    "id": "markdoc",
+    "extensions": [
+      "mdoc"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "grammar": "markdoc"
+  },
+  {
+    "id": "opencl",
+    "extensions": [
+      "cl"
+    ],
+    "lineComment": "//",
+    "grammar": "opencl"
+  },
+  {
+    "id": "just",
+    "extensions": [
+      "just"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "just"
+  },
+  {
+    "id": "gn",
+    "extensions": [
+      "gn",
+      "gni"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "gn"
+  },
+  {
+    "id": "blueprint",
+    "extensions": [
+      "blp"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "blueprint"
+  },
+  {
+    "id": "forth",
+    "extensions": [
+      "fs",
+      "forth",
+      "fth",
+      "4th"
+    ],
+    "lineComment": "\\\\",
+    "tabSize": 3,
+    "grammar": "forth"
+  },
+  {
+    "id": "fsharp",
+    "extensions": [
+      "fs",
+      "fsx",
+      "fsi",
+      "fsscript"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 4,
+    "grammar": "fsharp"
+  },
+  {
+    "id": "t32",
+    "extensions": [
+      "cmm",
+      "t32"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "t32"
+  },
+  {
+    "id": "webc",
+    "extensions": [
+      "webc"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "html"
+  },
+  {
+    "id": "typst",
+    "extensions": [
+      "typst",
+      "typ"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "typst"
+  },
+  {
+    "id": "nunjucks",
+    "extensions": [
+      "njk"
+    ],
+    "blockComment": [
+      "{#",
+      "#}"
+    ],
+    "tabSize": 2,
+    "grammar": "jinja2"
+  },
+  {
+    "id": "jinja",
+    "extensions": [
+      "jinja",
+      "jinja2",
+      "j2"
+    ],
+    "blockComment": [
+      "{#",
+      "#}"
+    ],
+    "tabSize": 2,
+    "grammar": "jinja2"
+  },
+  {
+    "id": "jjconfig",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "toml"
+  },
+  {
+    "id": "jjdescription",
+    "extensions": [],
+    "lineComment": "JJ:",
+    "tabSize": 4,
+    "grammar": "jjdescription"
+  },
+  {
+    "id": "jjrevset",
+    "extensions": [
+      "jjrevset"
+    ],
+    "grammar": "jjrevset"
+  },
+  {
+    "id": "jjtemplate",
+    "extensions": [
+      "jjtemplate"
+    ],
+    "grammar": "jjtemplate"
+  },
+  {
+    "id": "miseconfig",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "toml"
+  },
+  {
+    "id": "jq",
+    "extensions": [
+      "jq"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "jq"
+  },
+  {
+    "id": "wren",
+    "extensions": [
+      "wren"
+    ],
+    "tabSize": 2,
+    "grammar": "wren"
+  },
+  {
+    "id": "unison",
+    "extensions": [
+      "u"
+    ],
+    "lineComment": "--",
+    "tabSize": 4,
+    "grammar": "unison"
+  },
+  {
+    "id": "todotxt",
+    "extensions": [
+      "todotxt"
+    ],
+    "grammar": "todotxt"
+  },
+  {
+    "id": "strace",
+    "extensions": [
+      "strace"
+    ],
+    "grammar": "strace"
+  },
+  {
+    "id": "gemini",
+    "extensions": [
+      "gmi"
+    ],
+    "grammar": "gemini"
+  },
+  {
+    "id": "agda",
+    "extensions": [
+      "agda"
+    ],
+    "lineComment": "--",
+    "tabSize": 2,
+    "grammar": "agda"
+  },
+  {
+    "id": "templ",
+    "extensions": [
+      "templ"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "templ"
+  },
+  {
+    "id": "dbml",
+    "extensions": [
+      "dbml"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "dbml"
+  },
+  {
+    "id": "bitbake",
+    "extensions": [
+      "bb",
+      "bbappend",
+      "bbclass",
+      "conf}\" }"
+    ],
+    "lineComment": "#",
+    "grammar": "bitbake"
+  },
+  {
+    "id": "log",
+    "extensions": [
+      "log"
+    ],
+    "grammar": "log"
+  },
+  {
+    "id": "hoon",
+    "extensions": [
+      "hoon"
+    ],
+    "lineComment": "::",
+    "tabSize": 2,
+    "grammar": "hoon"
+  },
+  {
+    "id": "hocon",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "hocon"
+  },
+  {
+    "id": "koka",
+    "extensions": [
+      "kk"
+    ],
+    "lineComment": "//",
+    "tabSize": 8,
+    "grammar": "koka"
+  },
+  {
+    "id": "tolk",
+    "extensions": [
+      "tolk"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "tolk"
+  },
+  {
+    "id": "tact",
+    "extensions": [
+      "tact"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "tact"
+  },
+  {
+    "id": "pkl",
+    "extensions": [
+      "pkl",
+      "pcf"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "pkl"
+  },
+  {
+    "id": "groovy",
+    "extensions": [
+      "gradle",
+      "groovy",
+      "jenkinsfile"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "groovy"
+  },
+  {
+    "id": "fidl",
+    "extensions": [
+      "fidl"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "fidl"
+  },
+  {
+    "id": "powershell",
+    "extensions": [
+      "ps1",
+      "psm1",
+      "psd1",
+      "pscc",
+      "psrc"
+    ],
+    "blockComment": [
+      "<#",
+      "#>"
+    ],
+    "tabSize": 4,
+    "grammar": "powershell"
+  },
+  {
+    "id": "ld",
+    "extensions": [
+      "ld"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "ld"
+  },
+  {
+    "id": "hy",
+    "extensions": [
+      "hy"
+    ],
+    "lineComment": ";",
+    "tabSize": 1,
+    "grammar": "scheme"
+  },
+  {
+    "id": "hyprlang",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "hyprlang"
+  },
+  {
+    "id": "tcl",
+    "extensions": [
+      "tcl"
+    ],
+    "tabSize": 4,
+    "grammar": "tcl"
+  },
+  {
+    "id": "supercollider",
+    "extensions": [
+      "scd",
+      "sc",
+      "quark"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "supercollider"
+  },
+  {
+    "id": "rpmspec",
+    "extensions": [
+      "spec"
+    ],
+    "lineComment": "#",
+    "grammar": "rpmspec"
+  },
+  {
+    "id": "pkgbuild",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "bash"
+  },
+  {
+    "id": "helm",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "gotmpl"
+  },
+  {
+    "id": "glimmer",
+    "extensions": [
+      "templates}/*.hbs\" }"
+    ],
+    "blockComment": [
+      "{{!",
+      "}}"
+    ],
+    "grammar": "glimmer"
+  },
+  {
+    "id": "ohm",
+    "extensions": [
+      "ohm"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "ohm"
+  },
+  {
+    "id": "earthfile",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "earthfile"
+  },
+  {
+    "id": "adl",
+    "extensions": [
+      "adl"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "adl"
+  },
+  {
+    "id": "ldif",
+    "extensions": [
+      "ldif"
+    ],
+    "lineComment": "#",
+    "grammar": "ldif"
+  },
+  {
+    "id": "xtc",
+    "extensions": [
+      "xtc",
+      "xpc",
+      "xoa"
+    ],
+    "lineComment": ";",
+    "grammar": "xtc"
+  },
+  {
+    "id": "move",
+    "extensions": [
+      "move"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "move"
+  },
+  {
+    "id": "pest",
+    "extensions": [
+      "pest"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "pest"
+  },
+  {
+    "id": "elisp",
+    "extensions": [
+      "el"
+    ],
+    "lineComment": ";",
+    "grammar": "elisp"
+  },
+  {
+    "id": "gjs",
+    "extensions": [
+      "gjs"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "glimmer-javascript"
+  },
+  {
+    "id": "gts",
+    "extensions": [
+      "gts"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "glimmer-typescript"
+  },
+  {
+    "id": "gherkin",
+    "extensions": [
+      "feature"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "gherkin"
+  },
+  {
+    "id": "thrift",
+    "extensions": [
+      "thrift"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "thrift"
+  },
+  {
+    "id": "circom",
+    "extensions": [
+      "circom"
+    ],
+    "tabSize": 4,
+    "grammar": "circom"
+  },
+  {
+    "id": "snakemake",
+    "extensions": [
+      "smk"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "snakemake"
+  },
+  {
+    "id": "cylc",
+    "extensions": [
+      "cylc"
+    ],
+    "tabSize": 4,
+    "grammar": "cylc"
+  },
+  {
+    "id": "quint",
+    "extensions": [
+      "qnt"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "quint"
+  },
+  {
+    "id": "spade",
+    "extensions": [
+      "'spade'"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "spade"
+  },
+  {
+    "id": "amber",
+    "extensions": [
+      "ab"
+    ],
+    "tabSize": 4,
+    "grammar": "amber"
+  },
+  {
+    "id": "koto",
+    "extensions": [
+      "koto"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "koto"
+  },
+  {
+    "id": "gpr",
+    "extensions": [
+      "gpr"
+    ],
+    "lineComment": "--",
+    "tabSize": 3,
+    "grammar": "gpr"
+  },
+  {
+    "id": "vento",
+    "extensions": [
+      "vto"
+    ],
+    "blockComment": [
+      "{{#",
+      "#}}"
+    ],
+    "tabSize": 4,
+    "grammar": "vento"
+  },
+  {
+    "id": "nginx",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "nginx"
+  },
+  {
+    "id": "codeql",
+    "extensions": [
+      "ql",
+      "qll"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "ql"
+  },
+  {
+    "id": "gren",
+    "extensions": [
+      "gren"
+    ],
+    "blockComment": [
+      "{-",
+      "-}"
+    ],
+    "tabSize": 4,
+    "grammar": "gren"
+  },
+  {
+    "id": "ghostty",
+    "extensions": [
+      "ghostty"
+    ],
+    "tabSize": 2,
+    "grammar": "ghostty"
+  },
+  {
+    "id": "tera",
+    "extensions": [
+      "tera"
+    ],
+    "blockComment": [
+      "{#",
+      "#}"
+    ],
+    "tabSize": 4,
+    "grammar": "tera"
+  },
+  {
+    "id": "fga",
+    "extensions": [
+      "fga"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "fga"
+  },
+  {
+    "id": "csv",
+    "extensions": [
+      "csv"
+    ],
+    "grammar": "csv"
+  },
+  {
+    "id": "yara",
+    "extensions": [
+      "yara",
+      "yar"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "yara"
+  },
+  {
+    "id": "ink",
+    "extensions": [
+      "ink"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "ink"
+  },
+  {
+    "id": "sourcepawn",
+    "extensions": [
+      "sp",
+      "inc"
+    ],
+    "lineComment": "//",
+    "tabSize": 4,
+    "grammar": "sourcepawn"
+  },
+  {
+    "id": "vim",
+    "extensions": [
+      "vim"
+    ],
+    "tabSize": 4,
+    "grammar": "vim"
+  },
+  {
+    "id": "tlaplus",
+    "extensions": [
+      "tla"
+    ],
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 4,
+    "grammar": "tlaplus"
+  },
+  {
+    "id": "werk",
+    "extensions": [
+      "werk"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "werk"
+  },
+  {
+    "id": "debian",
+    "extensions": [
+      "dsc",
+      "changes"
+    ],
+    "grammar": "debian"
+  },
+  {
+    "id": "pug",
+    "extensions": [
+      "pug"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "pug"
+  },
+  {
+    "id": "dunstrc",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "dunstrc"
+  },
+  {
+    "id": "rust-format-args",
+    "extensions": [],
+    "grammar": "rust-format-args"
+  },
+  {
+    "id": "rust-format-args-macro",
+    "extensions": [],
+    "grammar": "rust"
+  },
+  {
+    "id": "clarity",
+    "extensions": [
+      "clar"
+    ],
+    "tabSize": 2,
+    "grammar": "clarity"
+  },
+  {
+    "id": "alloy",
+    "extensions": [
+      "alloy"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "alloy"
+  },
+  {
+    "id": "luau",
+    "extensions": [
+      "luau"
+    ],
+    "lineComment": "--",
+    "blockComment": [
+      "--[[",
+      "]]"
+    ],
+    "tabSize": 2,
+    "grammar": "luau"
+  },
+  {
+    "id": "caddyfile",
+    "extensions": [
+      "Caddyfile",
+      "caddyfile"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "caddyfile"
+  },
+  {
+    "id": "properties",
+    "extensions": [
+      "properties",
+      "prefs"
+    ],
+    "lineComment": "#",
+    "grammar": "properties"
+  },
+  {
+    "id": "robots.txt",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "robots-txt"
+  },
+  {
+    "id": "pip-requirements",
+    "extensions": [],
+    "grammar": "requirements"
+  },
+  {
+    "id": "kconfig",
+    "extensions": [
+      "Kconfig"
+    ],
+    "grammar": "kconfig"
+  },
+  {
+    "id": "doxyfile",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "doxyfile"
+  },
+  {
+    "id": "cross-config",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "toml"
+  },
+  {
+    "id": "git-cliff-config",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "toml"
+  },
+  {
+    "id": "cython",
+    "extensions": [
+      "pxd",
+      "pxi",
+      "pyx"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "cython"
+  },
+  {
+    "id": "shellcheckrc",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "shellcheckrc"
+  },
+  {
+    "id": "strictdoc",
+    "extensions": [
+      "sdoc",
+      "sgra"
+    ],
+    "lineComment": "..",
+    "grammar": "strictdoc"
+  },
+  {
+    "id": "docker-bake",
+    "extensions": [],
+    "lineComment": "#",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "hcl"
+  },
+  {
+    "id": "gitlab-ci",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "yaml"
+  },
+  {
+    "id": "wikitext",
+    "extensions": [
+      "wikimedia",
+      "mediawiki",
+      "wikitext"
+    ],
+    "blockComment": [
+      "<!--",
+      "-->"
+    ],
+    "tabSize": 2,
+    "grammar": "wikitext"
+  },
+  {
+    "id": "slisp",
+    "extensions": [
+      "sl"
+    ],
+    "lineComment": ";",
+    "tabSize": 2,
+    "grammar": "slisp"
+  },
+  {
+    "id": "nearley",
+    "extensions": [
+      "ne"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "nearley"
+  },
+  {
+    "id": "kcl",
+    "extensions": [
+      "kcl"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "kcl"
+  },
+  {
+    "id": "bovex",
+    "extensions": [
+      "bovex",
+      "bibvex"
+    ],
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 2,
+    "grammar": "bovex"
+  },
+  {
+    "id": "haxe",
+    "extensions": [
+      "hx"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "haxe"
+  },
+  {
+    "id": "basic",
+    "extensions": [
+      "bas"
+    ],
+    "lineComment": "REM",
+    "tabSize": 2,
+    "grammar": "basic"
+  },
+  {
+    "id": "freebasic",
+    "extensions": [
+      "bas",
+      "bi"
+    ],
+    "lineComment": "'",
+    "tabSize": 4,
+    "grammar": "freebasic"
+  },
+  {
+    "id": "scfg",
+    "extensions": [],
+    "lineComment": "#",
+    "grammar": "scfg"
+  },
+  {
+    "id": "sgf",
+    "extensions": [
+      "sgf"
+    ],
+    "tabSize": 2,
+    "grammar": "sgf"
+  },
+  {
+    "id": "ripple",
+    "extensions": [
+      "ripple"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "ripple"
+  },
+  {
+    "id": "woodpecker-ci",
+    "extensions": [],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "yaml"
+  },
+  {
+    "id": "chuck",
+    "extensions": [],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "chuck"
+  },
+  {
+    "id": "qmv",
+    "extensions": [],
+    "tabSize": 8,
+    "grammar": "qmv"
+  },
+  {
+    "id": "klog",
+    "extensions": [
+      "klg"
+    ],
+    "tabSize": 4,
+    "grammar": "klog"
+  },
+  {
+    "id": "styx",
+    "extensions": [
+      "styx"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "styx"
+  },
+  {
+    "id": "tilt",
+    "extensions": [
+      "tiltfile"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "python"
+  },
+  {
+    "id": "gnuplot",
+    "extensions": [
+      "gnuplot",
+      "plot",
+      "plt"
+    ],
+    "lineComment": "#",
+    "tabSize": 4,
+    "grammar": "gnuplot"
+  },
+  {
+    "id": "ebnf",
+    "extensions": [
+      "ebnf"
+    ],
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 4,
+    "grammar": "ebnf"
+  },
+  {
+    "id": "drools",
+    "extensions": [
+      "drl"
+    ],
+    "grammar": "drools"
+  },
+  {
+    "id": "proverif",
+    "extensions": [
+      "pv"
+    ],
+    "blockComment": [
+      "(*",
+      "*)"
+    ],
+    "tabSize": 8,
+    "grammar": "proverif"
+  },
+  {
+    "id": "ptx",
+    "extensions": [
+      "ptx"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 4,
+    "grammar": "ptx"
+  },
+  {
+    "id": "tql",
+    "extensions": [
+      "tql"
+    ],
+    "lineComment": "//",
+    "tabSize": 2,
+    "grammar": "tql"
+  },
+  {
+    "id": "moonbit",
+    "extensions": [
+      "mbt",
+      "mbti"
+    ],
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "moonbit"
+  },
+  {
+    "id": "concerto",
+    "extensions": [
+      "cto"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "concerto"
+  },
+  {
+    "id": "puppet",
+    "extensions": [
+      "pp"
+    ],
+    "lineComment": "#",
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "puppet"
+  },
+  {
+    "id": "p",
+    "extensions": [
+      "p"
+    ],
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "tabSize": 2,
+    "grammar": "p"
+  },
+  {
+    "id": "xwiki",
+    "extensions": [
+      "xwiki"
+    ],
+    "tabSize": 2,
+    "grammar": "xwiki"
+  },
+  {
+    "id": "varlink",
+    "extensions": [
+      "varlink"
+    ],
+    "lineComment": "#",
+    "tabSize": 2,
+    "grammar": "varlink"
+  },
+  {
+    "id": "metamath",
+    "extensions": [
+      "mm"
+    ],
+    "blockComment": [
+      "$(",
+      "$)"
+    ],
+    "tabSize": 2,
+    "grammar": "metamath"
+  },
+  {
+    "id": "batch",
+    "extensions": [
+      "bat",
+      "cmd",
+      "btm"
+    ],
+    "lineComment": "REM",
+    "tabSize": 2,
+    "grammar": "batch"
+  }
+]
