@@ -221,7 +221,10 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
    * Set or switch active programming language (e.g. 'javascript', 'typescript', 'python').
    */
   setLanguage(language: string): boolean {
-    this.currentLanguage = language;
+    if (this.currentLanguage !== language) {
+      this.currentLanguage = language;
+      this.tree = null;
+    }
     return this.initParser(language);
   }
 
@@ -261,7 +264,8 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     if (!source) return;
 
     try {
-      this.tree = this.parser.parse(source);
+      // Incremental parse using previous tree when available for maximum performance
+      this.tree = this.parser.parse(source, this.tree || undefined);
       if (!this.tree) return;
 
       const query = TreeSitterHighlighter.loadedQueries.get(this.currentLanguage);

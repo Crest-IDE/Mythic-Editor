@@ -291,6 +291,115 @@ export class EditorView {
     );
   }
 
+  typeText(text: string): void {
+    this.handleType(text);
+  }
+
+  handleKey(key: string): boolean {
+    switch (key.toUpperCase()) {
+      case 'UP':
+        this.handleArrow('up', false);
+        return true;
+      case 'DOWN':
+        this.handleArrow('down', false);
+        return true;
+      case 'LEFT':
+        this.handleArrow('left', false);
+        return true;
+      case 'RIGHT':
+        this.handleArrow('right', false);
+        return true;
+      case 'TAB':
+        this.handleType('  ');
+        return true;
+      case 'ENTER':
+        this.handleEnter();
+        return true;
+      case 'BACKSPACE':
+        this.handleDeleteBackward();
+        return true;
+      case 'DELETE':
+        this.handleDeleteForward();
+        return true;
+      case 'HOME': {
+        const currentPos = this.selection.getPosition();
+        this.setSelection(new Selection(currentPos.lineNumber, 1, currentPos.lineNumber, 1));
+        return true;
+      }
+      case 'END': {
+        const currentPos = this.selection.getPosition();
+        const endCol = this.buffer.getLineLength(currentPos.lineNumber) + 1;
+        this.setSelection(new Selection(currentPos.lineNumber, endCol, currentPos.lineNumber, endCol));
+        return true;
+      }
+      case 'PGUP': {
+        const visibleLines = Math.max(1, Math.floor(this.viewport.height / this.viewport.lineHeight));
+        const currentPos = this.selection.getPosition();
+        const targetLine = Math.max(1, currentPos.lineNumber - visibleLines);
+        this.revealLine(targetLine, currentPos.column, true);
+        return true;
+      }
+      case 'PGDN': {
+        const visibleLines = Math.max(1, Math.floor(this.viewport.height / this.viewport.lineHeight));
+        const currentPos = this.selection.getPosition();
+        const targetLine = Math.min(this.buffer.getLineCount(), currentPos.lineNumber + visibleLines);
+        this.revealLine(targetLine, currentPos.column, true);
+        return true;
+      }
+      case 'ESC':
+        this.blur();
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  revealLine(lineNumber: number, column: number = 1, center: boolean = true): void {
+    const totalLines = this.buffer.getLineCount();
+    const clampedLine = Math.max(1, Math.min(lineNumber, totalLines));
+    const lineLen = this.buffer.getLineLength(clampedLine);
+    const clampedCol = Math.max(1, Math.min(column, lineLen + 1));
+
+    const lineTop = (clampedLine - 1) * this.viewport.lineHeight;
+    let targetScrollTop = lineTop;
+    if (center) {
+      targetScrollTop = Math.max(0, lineTop - Math.floor(this.viewport.height / 2));
+    } else {
+      if (lineTop < this.scrollContainer.scrollTop) {
+        targetScrollTop = lineTop;
+      } else if (lineTop + this.viewport.lineHeight > this.scrollContainer.scrollTop + this.viewport.height) {
+        targetScrollTop = lineTop + this.viewport.lineHeight - this.viewport.height;
+      } else {
+        targetScrollTop = this.scrollContainer.scrollTop;
+      }
+    }
+
+    this.scrollContainer.scrollTop = targetScrollTop;
+    this.viewport.scrollTop = targetScrollTop;
+
+    this.setSelection(new Selection(clampedLine, clampedCol, clampedLine, clampedCol));
+    this.render();
+  }
+
+  updateOptions(newOptions: Partial<IEditorOptions>): void {
+    this.options = { ...this.options, ...newOptions };
+    if (newOptions.fontFamily || newOptions.fontSize || newOptions.lineHeight) {
+      this.metrics = FontMetrics.measure(
+        this.options.fontFamily ?? 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        this.options.fontSize ?? 14,
+        this.options.lineHeight
+      );
+      this.viewport.lineHeight = this.metrics.lineHeight;
+      this.viewport.charWidth = this.metrics.charWidth;
+      this.rootElement.style.fontSize = `${this.metrics.fontSize}px`;
+      this.layout();
+      this.linesCollection.refresh(this.buffer);
+      this.render();
+      this.cursor.updatePosition(this.selection.getPosition());
+      this.inputController.updatePosition(this.selection.getPosition());
+    }
+  }
+
   layout(): void {
     const rect = this.rootElement.getBoundingClientRect();
     const width = rect.width || this.rootElement.clientWidth || 800;
