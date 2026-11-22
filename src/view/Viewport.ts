@@ -44,6 +44,20 @@ export class Viewport {
     return lineNumbersWidth + this.lineDecorationsWidth;
   }
 
+  get height(): number {
+    return this.viewportHeight;
+  }
+  set height(val: number) {
+    this.viewportHeight = Math.max(0, val);
+  }
+
+  get width(): number {
+    return this.viewportWidth;
+  }
+  set width(val: number) {
+    this.viewportWidth = Math.max(0, val);
+  }
+
   /**
    * Set viewport pixel dimensions.
    */

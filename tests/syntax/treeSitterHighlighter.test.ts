@@ -84,4 +84,68 @@ describe('TreeSitterHighlighter Subsystem', () => {
     highlighter.update(buffer);
     expect(highlighter.getLineTokens(1)).toBeUndefined();
   });
+
+  it('correctly tokenizes nested expressions in template strings without dropping inner tokens', () => {
+    const highlighter = new TreeSitterHighlighter('javascript');
+    const code = 'const msg = `Hello ${user}!`;';
+    const buffer = new PieceTreeTextBuffer(code, '\n');
+
+    highlighter.update(buffer);
+
+    const tokens = highlighter.getLineTokens(1);
+    expect(tokens).toBeDefined();
+
+    // Verify token spans are non-overlapping and contiguous within expressions
+    for (let i = 1; i < tokens!.length; i++) {
+      expect(tokens![i].startIndex).toBeGreaterThanOrEqual(tokens![i - 1].endIndex);
+    }
+
+    // Must have 'const' as keyword
+    const kw = tokens!.find(t => t.type === 'keyword');
+    expect(kw).toBeDefined();
+    expect(code.slice(kw!.startIndex, kw!.endIndex)).toBe('const');
+
+    // Must have 'msg' as variable
+    const varMsg = tokens!.find(t => t.type === 'variable' && code.slice(t.startIndex, t.endIndex) === 'msg');
+    expect(varMsg).toBeDefined();
+
+    // Must have template string prefix `Hello ` as string
+    const strPrefix = tokens!.find(t => t.type === 'string' && code.slice(t.startIndex, t.endIndex).includes('Hello'));
+    expect(strPrefix).toBeDefined();
+
+    // Must have `${` as punctuation
+    const interpStart = tokens!.find(t => t.type === 'punctuation' && code.slice(t.startIndex, t.endIndex) === '${');
+    expect(interpStart).toBeDefined();
+
+    // Must have inner variable 'user'
+    const innerVar = tokens!.find(t => t.type === 'variable' && code.slice(t.startIndex, t.endIndex) === 'user');
+    expect(innerVar).toBeDefined();
+
+    // Must have `}` as punctuation
+    const interpEnd = tokens!.find(t => t.type === 'punctuation' && code.slice(t.startIndex, t.endIndex) === '}');
+    expect(interpEnd).toBeDefined();
+
+    // Must have template string suffix `!` as string
+    const strSuffix = tokens!.find(t => t.type === 'string' && code.slice(t.startIndex, t.endIndex).includes('!'));
+    expect(strSuffix).toBeDefined();
+  });
+
+  it('correctly tokenizes Python f-strings with embedded variables', () => {
+    const highlighter = new TreeSitterHighlighter('python');
+    const code = 'val = f"Count: {total}"';
+    const buffer = new PieceTreeTextBuffer(code, '\n');
+
+    highlighter.update(buffer);
+
+    const tokens = highlighter.getLineTokens(1);
+    expect(tokens).toBeDefined();
+
+    // Must contain inner variable 'total'
+    const innerVar = tokens!.find(t => t.type === 'variable' && code.slice(t.startIndex, t.endIndex) === 'total');
+    expect(innerVar).toBeDefined();
+
+    // Must contain string parts
+    const strPart = tokens!.find(t => t.type === 'string');
+    expect(strPart).toBeDefined();
+  });
 });

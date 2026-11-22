@@ -9,10 +9,8 @@
  * - vs/editor/common/commands/surroundSelectionCommand.ts (SurroundSelectionCommand)
  */
 
-export interface IAutoClosingPair {
-  readonly open: string;
-  readonly close: string;
-}
+import { IAutoClosingPair } from '../core/language/languageConfiguration';
+export type { IAutoClosingPair };
 
 export class AutoClosingPairs {
   // Monaco default auto-close before character sets

@@ -30,13 +30,18 @@ function getBaseUrl(): string {
  * Works in Browser (HTTP 200), Node/Vitest (fs), and Android WebView (file:/// via XMLHttpRequest with status 0).
  */
 async function fetchBinaryAsset(url: string): Promise<Uint8Array> {
-  if (typeof window === 'undefined' && typeof document === 'undefined') {
+  const isNode = typeof process !== 'undefined' && Boolean(process.versions?.node);
+  if (isNode) {
     try {
       const fsModuleName = 'fs';
       const fs = await import(/* @vite-ignore */ fsModuleName);
-      if (fs.existsSync(url)) {
-        const buffer = fs.readFileSync(url);
-        return new Uint8Array(buffer);
+      const clean = url.replace(/^\.\//, '');
+      const candidates = [url, `./public/${clean}`, clean];
+      for (const cand of candidates) {
+        if (fs.existsSync(cand)) {
+          const buffer = fs.readFileSync(cand);
+          return new Uint8Array(buffer);
+        }
       }
     } catch {
       // Fall through
@@ -70,7 +75,8 @@ async function fetchBinaryAsset(url: string): Promise<Uint8Array> {
  * Works in Browser, Node/Vitest, and Android WebView (file:/// via XMLHttpRequest with status 0).
  */
 async function fetchTextAsset(url: string): Promise<string> {
-  if (typeof window === 'undefined' && typeof document === 'undefined') {
+  const isNode = typeof process !== 'undefined' && Boolean(process.versions?.node);
+  if (isNode) {
     try {
       const fsModuleName = 'fs';
       const fs = await import(/* @vite-ignore */ fsModuleName);
@@ -134,7 +140,11 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
 
     TreeSitterHighlighter.initPromise = (async () => {
       const defaultLocate = (scriptName: string) => {
-        if (typeof window !== 'undefined' || typeof document !== 'undefined') {
+        const isNode = typeof process !== 'undefined' && Boolean(process.versions?.node);
+        if (isNode) {
+          return `./public/${scriptName}`;
+        }
+        if (typeof window !== 'undefined' && window.location && window.location.href) {
           return getBaseUrl() + scriptName;
         }
         return `./public/${scriptName}`;
@@ -362,11 +372,7 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
 
       if (startPos.row === endPos.row) {
         const lineNum = startPos.row + 1;
-        this.pushOrUpdateToken(lineNum, {
-          startIndex: startPos.column,
-          endIndex: endPos.column,
-          type: tokenType
-        });
+        this.applyTokenToLine(lineNum, startPos.column, endPos.column, tokenType);
       } else {
         for (let r = startPos.row; r <= endPos.row; r++) {
           const lineNum = r + 1;
@@ -375,29 +381,68 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
           const endCol = r === endPos.row ? endPos.column : lineLen;
 
           if (endCol > startCol) {
-            this.pushOrUpdateToken(lineNum, {
-              startIndex: startCol,
-              endIndex: endCol,
-              type: tokenType
-            });
+            this.applyTokenToLine(lineNum, startCol, endCol, tokenType);
           }
         }
       }
     }
   }
 
-  private pushOrUpdateToken(lineNumber: number, token: ILineToken): void {
-    let list = this.lineTokensMap.get(lineNumber);
-    if (!list) {
-      list = [];
-      this.lineTokensMap.set(lineNumber, list);
+  private applyTokenToLine(lineNumber: number, startIndex: number, endIndex: number, type: string): void {
+    if (endIndex <= startIndex) return;
+    const existing = this.lineTokensMap.get(lineNumber) || [];
+    const updated = this.applyInterval(existing, startIndex, endIndex, type);
+    this.lineTokensMap.set(lineNumber, updated);
+  }
+
+  /**
+   * 1D Interval overwriting / carving algorithm:
+   * Splits and replaces overlapping parent/earlier tokens with the more specific inner/later token.
+   */
+  private applyInterval(list: ILineToken[], newStart: number, newEnd: number, type: string): ILineToken[] {
+    if (newEnd <= newStart) return list;
+    const result: ILineToken[] = [];
+    const insertedToken: ILineToken = { startIndex: newStart, endIndex: newEnd, type };
+    let inserted = false;
+
+    for (const token of list) {
+      if (token.endIndex <= newStart) {
+        result.push(token);
+      } else if (token.startIndex >= newEnd) {
+        if (!inserted) {
+          result.push(insertedToken);
+          inserted = true;
+        }
+        result.push(token);
+      } else {
+        // Overlaps with new token: preserve left portion strictly before newStart
+        if (token.startIndex < newStart) {
+          result.push({
+            startIndex: token.startIndex,
+            endIndex: newStart,
+            type: token.type
+          });
+        }
+        if (!inserted) {
+          result.push(insertedToken);
+          inserted = true;
+        }
+        // Preserve right portion strictly after newEnd
+        if (token.endIndex > newEnd) {
+          result.push({
+            startIndex: newEnd,
+            endIndex: token.endIndex,
+            type: token.type
+          });
+        }
+      }
     }
-    const existing = list.find(t => t.startIndex === token.startIndex && t.endIndex === token.endIndex);
-    if (existing) {
-      existing.type = token.type;
-    } else {
-      list.push(token);
+
+    if (!inserted) {
+      result.push(insertedToken);
     }
+
+    return result;
   }
 
   /**
@@ -415,6 +460,9 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     if (name.startsWith('variable.other.member') || name === 'property') return 'property';
     if (name.startsWith('variable')) return 'variable';
     if (name.startsWith('punctuation')) return 'punctuation';
+    if (name.startsWith('attribute')) return 'function';
+    if (name.startsWith('namespace')) return 'type';
+    if (name.startsWith('label')) return 'keyword';
     return undefined;
   }
 }
