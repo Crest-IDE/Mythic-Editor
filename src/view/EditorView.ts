@@ -22,6 +22,7 @@ import { EditStack } from '../core/model/EditStack';
 import { TextChange } from '../core/model/TextChange';
 import { CursorColumns } from '../core/model/CursorColumns';
 import { LanguageConfigurationRegistry } from '../core/language/LanguageConfigurationRegistry';
+import { OnEnterSupport } from '../core/language/OnEnterSupport';
 import './editor.css';
 
 export interface IEditorOptions {
@@ -889,8 +890,62 @@ export class EditorView {
 
   private handleEnter(): void {
     this.editStack.pushStackElement();
-    this.handleType('\n');
+    const beforeSelection = this.selection;
+
+    // 1. If selection is not empty, delete the selected range first
+    if (!this.selection.isEmpty()) {
+      const startOffset = this.buffer.getOffsetAt(this.selection.getStartPosition());
+      const selectedText = this.buffer.getValueInRange(this.selection);
+      this.buffer.deleteRange(this.selection);
+      const newPos = this.buffer.getPositionAt(startOffset);
+      this.selection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+      this.editStack.pushEdit(beforeSelection, this.selection, new TextChange(startOffset, selectedText, startOffset, ''));
+    }
+
+    // 2. Query OnEnterSupport using current cursor line and language configuration
+    const pos = this.selection.getPosition();
+    const lineContent = this.buffer.getLineContent(pos.lineNumber);
+    const beforeText = lineContent.substring(0, pos.column - 1);
+    const afterText = lineContent.substring(pos.column - 1);
+    const previousLineText = pos.lineNumber > 1 ? this.buffer.getLineContent(pos.lineNumber - 1) : undefined;
+
+    const registry = LanguageConfigurationRegistry.getInstance();
+    const config = registry.getLanguageConfiguration(this.languageId);
+
+    const enterResult = OnEnterSupport.getEnterResult(beforeText, afterText, config, previousLineText);
+
+    // 3. Apply the edit
+    const baseOffset = this.buffer.getOffsetAt(pos);
+    const deleteBefore = enterResult.deleteBeforeCount || 0;
+    const deleteAfter = enterResult.deleteCount || 0;
+    const editOffset = baseOffset - deleteBefore;
+    const totalDeleteCount = deleteBefore + deleteAfter;
+
+    let replacedText = '';
+    if (totalDeleteCount > 0) {
+      replacedText = this.buffer.getText().substring(editOffset, editOffset + totalDeleteCount);
+      this.buffer.delete(editOffset, totalDeleteCount);
+    }
+
+    this.buffer.insert(editOffset, enterResult.textToInsert);
+
+    // 4. Position cursor at the indented location
+    const newCursorOffset = editOffset + enterResult.cursorOffset;
+    const newPos = this.buffer.getPositionAt(newCursorOffset);
+    const newSelection = new Selection(newPos.lineNumber, newPos.column, newPos.lineNumber, newPos.column);
+    this.setSelection(newSelection);
+
+    this.editStack.pushEdit(
+      beforeSelection,
+      newSelection,
+      new TextChange(editOffset, replacedText, editOffset, enterResult.textToInsert)
+    );
     this.editStack.pushStackElement();
+
+    this.updateCanvasHeight();
+    this.refreshLines();
+    this.render();
+    this.options.onDidChangeContent?.(this.buffer);
   }
 
   private handleArrow(direction: 'left' | 'right' | 'up' | 'down', expandSelection: boolean): void {

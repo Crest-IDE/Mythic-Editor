@@ -11,7 +11,10 @@ import {
   CommentRule,
   CharacterPair,
   IAutoClosingPair,
-  IAutoClosingPairConditional
+  IAutoClosingPairConditional,
+  IndentAction,
+  IndentationRule,
+  OnEnterRule
 } from './languageConfiguration';
 
 import rawHelixLanguages from './languages.json';
@@ -61,6 +64,8 @@ export class LanguageConfigurationRegistry {
       autoClosingPairs: config.autoClosingPairs || existing.autoClosingPairs,
       surroundingPairs: config.surroundingPairs || existing.surroundingPairs,
       indentation: config.indentation || existing.indentation,
+      indentationRules: config.indentationRules || existing.indentationRules,
+      onEnterRules: config.onEnterRules || existing.onEnterRules,
       wordPattern: config.wordPattern || existing.wordPattern,
       grammar: config.grammar || existing.grammar || languageId
     };
@@ -192,6 +197,36 @@ export class LanguageConfigurationRegistry {
       { open: '`', close: '`' }
     ];
 
+    const jsIndentationRules: IndentationRule = {
+      increaseIndentPattern: /^((?!.*\/\*).)*(\{[^}"']*|\[[^\]"']*|\([^)"']*)$/,
+      decreaseIndentPattern: /^((?!.*?\/\*).)*[\}\]\)].*$/
+    };
+
+    const jsOnEnterRules: OnEnterRule[] = [
+      {
+        beforeText: /^\s*\/\*\*(?!\/)([^\*]|\*(?!\/))*$/,
+        afterText: /^\s*\*\/$/,
+        action: {
+          indentAction: IndentAction.IndentOutdent,
+          appendText: ' * '
+        }
+      },
+      {
+        beforeText: /^\s*\/\*\*(?!\/)([^\*]|\*(?!\/))*$/,
+        action: {
+          indentAction: IndentAction.None,
+          appendText: ' * '
+        }
+      },
+      {
+        beforeText: /^(\t|(\ \ ))*\ \*([^\/]|\*(?!\/))*$/,
+        action: {
+          indentAction: IndentAction.None,
+          appendText: '* '
+        }
+      }
+    ];
+
     this.register(PLAINTEXT_LANGUAGE_ID, {
       id: PLAINTEXT_LANGUAGE_ID,
       brackets: defaultBrackets,
@@ -207,6 +242,8 @@ export class LanguageConfigurationRegistry {
       autoClosingPairs: defaultAutoClose,
       surroundingPairs: defaultSurrounding,
       indentation: { tabSize: 2, insertSpaces: true },
+      indentationRules: jsIndentationRules,
+      onEnterRules: jsOnEnterRules,
       grammar: 'javascript'
     });
 
@@ -217,6 +254,8 @@ export class LanguageConfigurationRegistry {
       autoClosingPairs: defaultAutoClose,
       surroundingPairs: defaultSurrounding,
       indentation: { tabSize: 2, insertSpaces: true },
+      indentationRules: jsIndentationRules,
+      onEnterRules: jsOnEnterRules,
       grammar: 'typescript'
     });
 
@@ -233,6 +272,10 @@ export class LanguageConfigurationRegistry {
       ],
       surroundingPairs: defaultSurrounding,
       indentation: { tabSize: 4, insertSpaces: true },
+      indentationRules: {
+        increaseIndentPattern: /:\s*(#.*)?$/,
+        decreaseIndentPattern: /^\s*(elif|else|except|finally)\b.*:/
+      },
       grammar: 'python'
     });
 
@@ -252,6 +295,10 @@ export class LanguageConfigurationRegistry {
       ],
       surroundingPairs: defaultSurrounding,
       indentation: { tabSize: 2, insertSpaces: true },
+      indentationRules: {
+        increaseIndentPattern: /<(?!\?|(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\b|[^>]*\/>)[a-zA-Z0-9_-]+[^>]*>$/,
+        decreaseIndentPattern: /^\s*<\/[a-zA-Z0-9_-]+>/
+      },
       grammar: 'html'
     });
 

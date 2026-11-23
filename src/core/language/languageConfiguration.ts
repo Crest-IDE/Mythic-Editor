@@ -35,6 +35,26 @@ export interface IndentationRule {
   unIndentedLinePattern?: RegExp;
 }
 
+export enum IndentAction {
+  None = 0,
+  Indent = 1,
+  IndentOutdent = 2,
+  Outdent = 3
+}
+
+export interface EnterAction {
+  indentAction: IndentAction;
+  appendText?: string;
+  removeText?: number;
+}
+
+export interface OnEnterRule {
+  beforeText: RegExp;
+  afterText?: RegExp;
+  previousLineText?: RegExp;
+  action: EnterAction;
+}
+
 export interface IndentOptions {
   tabSize: number;
   insertSpaces: boolean;
@@ -51,6 +71,8 @@ export interface LanguageConfiguration {
   autoClosingPairs?: IAutoClosingPairConditional[];
   surroundingPairs?: IAutoClosingPair[];
   indentation?: IndentOptions;
+  indentationRules?: IndentationRule;
+  onEnterRules?: OnEnterRule[];
   wordPattern?: RegExp;
   grammar?: string;
 }

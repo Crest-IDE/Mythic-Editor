@@ -6,3 +6,4 @@
 
 export * from './languageConfiguration';
 export * from './LanguageConfigurationRegistry';
+export * from './OnEnterSupport';
