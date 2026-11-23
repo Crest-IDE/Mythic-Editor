@@ -235,6 +235,28 @@ export class LanguageConfigurationRegistry {
       indentation: { tabSize: 4, insertSpaces: true },
       grammar: 'python'
     });
+
+    this.register('html', {
+      id: 'html',
+      comments: { blockComment: ['<!--', '-->'] },
+      brackets: [
+        ['<', '>'],
+        ['(', ')'],
+        ['[', ']'],
+        ['{', '}']
+      ],
+      autoClosingPairs: [
+        { open: '<', close: '>' },
+        { open: '"', close: '"' },
+        { open: "'", close: "'" }
+      ],
+      surroundingPairs: defaultSurrounding,
+      indentation: { tabSize: 2, insertSpaces: true },
+      grammar: 'html'
+    });
+
+    this.registerFileExtension('html', 'html');
+    this.registerFileExtension('htm', 'html');
   }
 
   /**

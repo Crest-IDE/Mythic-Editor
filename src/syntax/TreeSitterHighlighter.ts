@@ -450,6 +450,8 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
    */
   private mapCaptureNameToType(name: string): string | undefined {
     if (name.startsWith('keyword')) return 'keyword';
+    if (name.startsWith('tag') || name === 'tag') return 'tag';
+    if (name.startsWith('attribute')) return 'attribute';
     if (name === 'function.builtin') return 'function-builtin';
     if (name === 'function.method' || name === 'function.method.private') return 'function-method';
     if (name.startsWith('function') || name === 'constructor') return 'function';
@@ -466,9 +468,8 @@ export class TreeSitterHighlighter implements ILineTokensProvider {
     if (name.startsWith('variable.other.member') || name === 'property') return 'property';
     if (name.startsWith('variable')) return 'variable';
     if (name.startsWith('punctuation')) return 'punctuation';
-    if (name.startsWith('attribute')) return 'function';
     if (name.startsWith('namespace')) return 'type';
-    if (name.startsWith('label')) return 'keyword';
+    if (name.startsWith('label')) return 'label';
     return undefined;
   }
 }

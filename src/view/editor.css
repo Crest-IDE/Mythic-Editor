@@ -28,6 +28,9 @@
   --mythic-token-property: #e5c07b;
   --mythic-token-type: #e5c07b;
   --mythic-token-type-builtin: #e5c07b;
+  --mythic-token-tag: #e06c75;
+  --mythic-token-attribute: #d19a66;
+  --mythic-token-label: #61afef;
   --mythic-token-operator: #56b6c2;
   --mythic-token-constant: #d19a66;
   --mythic-token-constant-builtin: #e5c07b;
@@ -197,6 +200,9 @@
 .mtk-variable-parameter, .mythic-token-variable-parameter { color: var(--mythic-token-variable-parameter, #d19a66); font-style: italic; }
 .mtk-variable-builtin, .mythic-token-variable-builtin { color: var(--mythic-token-variable-builtin, #e5c07b); font-style: italic; }
 .mtk-property, .mythic-token-property { color: var(--mythic-token-property, #e5c07b); }
+.mtk-tag, .mythic-token-tag { color: var(--mythic-token-tag, #e06c75); }
+.mtk-attribute, .mythic-token-attribute { color: var(--mythic-token-attribute, #d19a66); }
+.mtk-label, .mythic-token-label { color: var(--mythic-token-label, #61afef); }
 .mtk-type, .mythic-token-type { color: var(--mythic-token-type, #e5c07b); }
 .mtk-type-builtin, .mythic-token-type-builtin { color: var(--mythic-token-type-builtin, #e5c07b); }
 .mtk-operator, .mythic-token-operator { color: var(--mythic-token-operator, #56b6c2); }

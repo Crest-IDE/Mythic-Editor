@@ -55,6 +55,28 @@ primes = [x for x in range(2, 50) if engine.is_prime(x)]
 print(f"Generated {len(primes)} primes: {primes}")
 `,
 
+  html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mythic Editor - Web Preview</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Semantic Header -->
+  <header class="app-header" id="main-header">
+    <h1 class="title">Welcome to Mythic Editor</h1>
+    <nav class="nav-bar">
+      <a href="https://github.com" class="nav-link">GitHub</a>
+      <a href="#about" class="nav-link">About</a>
+    </nav>
+  </header>
+  <main class="content-body">
+    <p>Mobile-first high performance code editor with <strong>Tree-sitter</strong>!</p>
+  </main>
+</body>
+</html>`,
+
   unicode: `// Unicode & Astral Planes Test
 const greeting = "नमस्ते दुनिया!"; // Devanagari
 const chinese = "你好，世界！"; // CJK
@@ -68,6 +90,7 @@ const math = "∀x ∈ ℝ: x² ≥ 0"; // Math symbols`,
 const SAMPLE_LANGUAGES: Record<string, string> = {
   basic: 'typescript',
   python: 'python',
+  html: 'html',
   unicode: 'javascript',
   multiline: 'typescript'
 };
