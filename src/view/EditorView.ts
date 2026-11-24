@@ -17,7 +17,7 @@ import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
 import { ViewCurrentLineHighlight, LineHighlightMode } from './ViewCurrentLineHighlight';
 import { ViewBracketMatch } from './ViewBracketMatch';
-import { BracketMatching, BracketMatch } from '../core/language/BracketMatching';
+import { BracketMatching, BracketMatch, IInvalidBracket } from '../core/language/BracketMatching';
 import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
 import { EditStack } from '../core/model/EditStack';
@@ -152,6 +152,7 @@ export class EditorView {
 
     // 6. Initial Layout & Render
     this.maxLineWidth = this.computeMaxLineWidth();
+    this.updateInvalidBrackets();
     this.layout();
     this.render();
   }
@@ -179,6 +180,7 @@ export class EditorView {
     this.scrollContainer.scrollLeft = 0;
     this.viewport.scrollTop = 0;
     this.viewport.scrollLeft = 0;
+    this.updateInvalidBrackets();
     this.layout();
     this.render();
   }
@@ -188,6 +190,7 @@ export class EditorView {
       (provider as any).update(this.buffer);
     }
     this.linesCollection.setTokensProvider(provider);
+    this.updateInvalidBrackets();
     this.linesCollection.refresh(this.buffer);
     this.render();
   }
@@ -280,11 +283,23 @@ export class EditorView {
     return this.linesCollection.getTokensProvider();
   }
 
+  getInvalidBrackets(): IInvalidBracket[] {
+    const tokensProvider = this.linesCollection.getTokensProvider() ?? undefined;
+    return BracketMatching.getInvalidBrackets(this.buffer, undefined, tokensProvider);
+  }
+
+  private updateInvalidBrackets(): void {
+    const tokensProvider = this.linesCollection.getTokensProvider() ?? undefined;
+    const invalidBrackets = BracketMatching.getInvalidBrackets(this.buffer, undefined, tokensProvider);
+    this.linesCollection.setInvalidBrackets(invalidBrackets);
+  }
+
   private refreshLines(): void {
     const provider = this.linesCollection.getTokensProvider();
     if (provider && 'update' in provider && typeof (provider as any).update === 'function') {
       (provider as any).update(this.buffer);
     }
+    this.updateInvalidBrackets();
     this.linesCollection.refresh(this.buffer);
   }
 

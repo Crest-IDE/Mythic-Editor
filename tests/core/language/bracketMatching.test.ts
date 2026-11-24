@@ -174,4 +174,101 @@ describe('BracketMatching Core Subsystem', () => {
     expect(enclosing?.open.startColumn).toBe(4);
     expect(enclosing?.close.startColumn).toBe(8);
   });
+
+  describe('Invalid and Unmatched Bracket Detection (VS Code Compliant)', () => {
+    it('returns empty array when all brackets are correctly balanced', () => {
+      const buffer = new PieceTreeTextBuffer('function foo(a, b) { return [a, b]; }', '\n');
+      const invalid = BracketMatching.getInvalidBrackets(buffer);
+      expect(invalid).toEqual([]);
+    });
+
+    it('identifies unexpected closing bracket when closing bracket has no open bracket', () => {
+      const buffer = new PieceTreeTextBuffer('const x = 1);', '\n');
+      const invalid = BracketMatching.getInvalidBrackets(buffer);
+      expect(invalid.length).toBe(1);
+      expect(invalid[0].char).toBe(')');
+      expect(invalid[0].type).toBe('unexpected-closing-bracket');
+      expect(invalid[0].range.startLineNumber).toBe(1);
+      expect(invalid[0].range.startColumn).toBe(12);
+      expect(invalid[0].range.endColumn).toBe(13);
+    });
+
+    it('identifies unclosed opening bracket when closing bracket is missing', () => {
+      const buffer = new PieceTreeTextBuffer('const x = (1 + 2;', '\n');
+      const invalid = BracketMatching.getInvalidBrackets(buffer);
+      expect(invalid.length).toBe(1);
+      expect(invalid[0].char).toBe('(');
+      expect(invalid[0].type).toBe('unclosed-opening-bracket');
+      expect(invalid[0].range.startLineNumber).toBe(1);
+      expect(invalid[0].range.startColumn).toBe(11);
+      expect(invalid[0].range.endColumn).toBe(12);
+    });
+
+    it('identifies remaining bracket as invalid when one bracket is removed from () pair', () => {
+      // User typed "()", then deleted ')' -> "(" is left
+      const bufferWithoutCloser = new PieceTreeTextBuffer('foo(', '\n');
+      const invalidOpener = BracketMatching.getInvalidBrackets(bufferWithoutCloser);
+      expect(invalidOpener.length).toBe(1);
+      expect(invalidOpener[0].char).toBe('(');
+      expect(invalidOpener[0].type).toBe('unclosed-opening-bracket');
+
+      // User typed "()", then deleted '(' -> ")" is left
+      const bufferWithoutOpener = new PieceTreeTextBuffer('foo)', '\n');
+      const invalidCloser = BracketMatching.getInvalidBrackets(bufferWithoutOpener);
+      expect(invalidCloser.length).toBe(1);
+      expect(invalidCloser[0].char).toBe(')');
+      expect(invalidCloser[0].type).toBe('unexpected-closing-bracket');
+    });
+
+    it('identifies mismatched closing bracket within a pair', () => {
+      const buffer = new PieceTreeTextBuffer('const arr = [ 1, 2 );', '\n');
+      const invalid = BracketMatching.getInvalidBrackets(buffer);
+      // Both the unexpected closer ')' and the unclosed '[' are invalid
+      expect(invalid.some(b => b.char === ')' && b.type === 'unexpected-closing-bracket')).toBe(true);
+      expect(invalid.some(b => b.char === '[' && b.type === 'unclosed-opening-bracket')).toBe(true);
+    });
+
+    it('identifies interleaved invalid brackets ( [ ) ]', () => {
+      const buffer = new PieceTreeTextBuffer('([)]', '\n');
+      const invalid = BracketMatching.getInvalidBrackets(buffer);
+      // In VS Code parser: '[' and ']' are flagged invalid because '(' matches ')'
+      expect(invalid.length).toBe(2);
+      expect(invalid.some(b => b.char === '[')).toBe(true);
+      expect(invalid.some(b => b.char === ']')).toBe(true);
+    });
+
+    it('detects multiple multiline unclosed brackets', () => {
+      const text = 'function test() {\n  if (true) {\n    const x = 1;\n';
+      const buffer = new PieceTreeTextBuffer(text, '\n');
+      const invalid = BracketMatching.getInvalidBrackets(buffer);
+      // Two open curly braces left unclosed
+      expect(invalid.length).toBe(2);
+      expect(invalid[0].char).toBe('{');
+      expect(invalid[0].range.startLineNumber).toBe(1);
+      expect(invalid[1].char).toBe('{');
+      expect(invalid[1].range.startLineNumber).toBe(2);
+    });
+
+    it('ignores unmatched bracket characters in comments or strings', () => {
+      const text = '// unmatched bracket in comment: )\nconst str = "unmatched (";\nconst val = 42;';
+      const buffer = new PieceTreeTextBuffer(text, '\n');
+      const mockTokensProvider: IBracketSearchTokenProvider = {
+        getLineTokens(lineNumber: number) {
+          if (lineNumber === 1) {
+            return [{ startIndex: 0, endIndex: 35, type: 'comment' }];
+          }
+          if (lineNumber === 2) {
+            return [
+              { startIndex: 0, endIndex: 11, type: 'keyword' },
+              { startIndex: 12, endIndex: 26, type: 'string' }
+            ];
+          }
+          return [];
+        }
+      };
+
+      const invalid = BracketMatching.getInvalidBrackets(buffer, undefined, mockTokensProvider);
+      expect(invalid).toEqual([]);
+    });
+  });
 });

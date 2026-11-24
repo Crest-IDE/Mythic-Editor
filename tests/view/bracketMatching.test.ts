@@ -44,6 +44,24 @@ class MockNode {
     return child;
   }
 
+  replaceChildren(...newChildren: MockNode[]): void {
+    for (const c of this.childNodes) {
+      c.parentNode = null;
+    }
+    this.childNodes = [];
+    for (const c of newChildren) {
+      if ((c as any).isFragment) {
+        for (const fc of c.childNodes) {
+          fc.parentNode = this;
+          this.childNodes.push(fc);
+        }
+      } else {
+        c.parentNode = this;
+        this.childNodes.push(c);
+      }
+    }
+  }
+
   getBoundingClientRect() {
     return { left: 0, top: 0, width: 800, height: 600 };
   }
@@ -295,6 +313,67 @@ describe('ViewBracketMatch Subsystem (Box Outline Highlighting)', () => {
     expect(match?.open.startColumn).toBe(25);
     expect(match?.close.startLineNumber).toBe(4);
     expect(match?.close.startColumn).toBe(37);
+  });
+
+  it('turns remaining bracket red (unexpected-closing-bracket) when one bracket from () is removed', () => {
+    const container = new MockElement() as unknown as HTMLElement;
+    const buffer = new PieceTreeTextBuffer('', '\n');
+    const editor = new EditorView(container, buffer);
+
+    // 1. Type '(' -> AutoClosingPairs inserts ')' and sets cursor between at col 2
+    editor.typeText('(');
+    expect(editor.getBuffer().getText()).toBe('()');
+    expect(editor.getInvalidBrackets()).toEqual([]);
+
+    // Line element initially has balanced brackets (no unexpected-closing-bracket class)
+    const lineElBefore = (editor as any).linesCollection.getLineElement(1) as MockElement;
+    expect(lineElBefore.textContent).toBe('()');
+    const hasUnexpectedBefore = lineElBefore.childNodes.some(
+      (node: any) => node.className && node.className.includes('unexpected-closing-bracket')
+    );
+    expect(hasUnexpectedBefore).toBe(false);
+
+    // 2. Move cursor to col 3 (after ')') and backspace to delete ')'
+    editor.setSelection(new Selection(1, 3, 1, 3));
+    editor.handleKey('BACKSPACE');
+    expect(editor.getBuffer().getText()).toBe('(');
+
+    // Now '(' is unclosed and invalid
+    const invalidList = editor.getInvalidBrackets();
+    expect(invalidList.length).toBe(1);
+    expect(invalidList[0].char).toBe('(');
+    expect(invalidList[0].type).toBe('unclosed-opening-bracket');
+
+    // The line DOM element must now contain a span with .unexpected-closing-bracket
+    const lineElAfter = (editor as any).linesCollection.getLineElement(1) as MockElement;
+    const unexpectedSpan = lineElAfter.childNodes.find(
+      (node: any) => node.className && node.className.includes('unexpected-closing-bracket')
+    );
+    expect(unexpectedSpan).toBeDefined();
+    expect((unexpectedSpan as any).textContent).toBe('(');
+    expect((unexpectedSpan as any).className).toContain('unexpected-closing-bracket');
+    expect((unexpectedSpan as any).className).toContain('mtk-unexpected-closing-bracket');
+  });
+
+  it('turns lone closing bracket red (unexpected-closing-bracket) when typed alone', () => {
+    const container = new MockElement() as unknown as HTMLElement;
+    const buffer = new PieceTreeTextBuffer('', '\n');
+    const editor = new EditorView(container, buffer);
+
+    editor.typeText(')');
+    expect(editor.getBuffer().getText()).toBe(')');
+
+    const invalidList = editor.getInvalidBrackets();
+    expect(invalidList.length).toBe(1);
+    expect(invalidList[0].char).toBe(')');
+    expect(invalidList[0].type).toBe('unexpected-closing-bracket');
+
+    const lineEl = (editor as any).linesCollection.getLineElement(1) as MockElement;
+    const unexpectedSpan = lineEl.childNodes.find(
+      (node: any) => node.className && node.className.includes('unexpected-closing-bracket')
+    );
+    expect(unexpectedSpan).toBeDefined();
+    expect((unexpectedSpan as any).textContent).toBe(')');
   });
 });
 

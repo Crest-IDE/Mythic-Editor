@@ -20,6 +20,12 @@ export interface BracketMatch {
   readonly close: Range;
 }
 
+export interface IInvalidBracket {
+  readonly range: Range;
+  readonly char: string;
+  readonly type: 'unexpected-closing-bracket' | 'unclosed-opening-bracket';
+}
+
 export interface IBracketSearchTokenProvider {
   getLineTokens(lineNumber: number): Array<{ startIndex: number; endIndex: number; type: string }> | undefined;
 }
@@ -284,5 +290,139 @@ export class BracketMatching {
     }
 
     return null;
+  }
+
+  /**
+   * Scans the buffer and identifies invalid (unexpected closing or unclosed opening) brackets.
+   * Faithfully adapted from VS Code's bracketPairsTree parser (ast.ts, parser.ts, bracketPairsTree.ts).
+   */
+  public static getInvalidBrackets(
+    buffer: ITextBuffer,
+    brackets: CharacterPair[] = BracketMatching.DEFAULT_BRACKETS,
+    tokensProvider?: IBracketSearchTokenProvider
+  ): IInvalidBracket[] {
+    const invalidBrackets: IInvalidBracket[] = [];
+    const lineCount = buffer.getLineCount();
+
+    // Sort pairs by length descending so multi-character brackets match first if any
+    const allPairs = [...brackets].sort((a, b) => Math.max(b[0].length, b[1].length) - Math.max(a[0].length, a[1].length));
+
+    interface RawBracketToken {
+      kind: 'open' | 'close';
+      char: string;
+      pairChar: string;
+      range: Range;
+    }
+
+    const tokens: RawBracketToken[] = [];
+
+    for (let line = 1; line <= lineCount; line++) {
+      const lineContent = buffer.getLineContent(line);
+      const len = lineContent.length;
+      let i = 0;
+      while (i < len) {
+        if (this.isIgnoredToken(line, i, tokensProvider)) {
+          i++;
+          continue;
+        }
+
+        let matched = false;
+        for (const [open, close] of allPairs) {
+          if (lineContent.startsWith(open, i)) {
+            tokens.push({
+              kind: 'open',
+              char: open,
+              pairChar: close,
+              range: new Range(line, i + 1, line, i + 1 + open.length)
+            });
+            i += open.length;
+            matched = true;
+            break;
+          } else if (lineContent.startsWith(close, i)) {
+            tokens.push({
+              kind: 'close',
+              char: close,
+              pairChar: open,
+              range: new Range(line, i + 1, line, i + 1 + close.length)
+            });
+            i += close.length;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          i++;
+        }
+      }
+    }
+
+    let tokenIndex = 0;
+
+    function peek(): RawBracketToken | undefined {
+      return tokens[tokenIndex];
+    }
+
+    function read(): RawBracketToken | undefined {
+      return tokens[tokenIndex++];
+    }
+
+    function parseList(openedBracketIds: Set<string>): void {
+      while (true) {
+        const token = peek();
+        if (!token) {
+          break;
+        }
+        if (token.kind === 'close' && openedBracketIds.has(token.pairChar)) {
+          break;
+        }
+
+        parseChild(openedBracketIds);
+      }
+    }
+
+    function parseChild(openedBracketIds: Set<string>): void {
+      const token = read();
+      if (!token) {
+        return;
+      }
+
+      if (token.kind === 'close') {
+        invalidBrackets.push({
+          range: token.range,
+          char: token.char,
+          type: 'unexpected-closing-bracket'
+        });
+        return;
+      }
+
+      if (token.kind === 'open') {
+        const childOpened = new Set(openedBracketIds);
+        childOpened.add(token.char);
+
+        parseList(childOpened);
+
+        const nextToken = peek();
+        if (nextToken && nextToken.kind === 'close' && nextToken.pairChar === token.char) {
+          read();
+        } else {
+          invalidBrackets.push({
+            range: token.range,
+            char: token.char,
+            type: 'unclosed-opening-bracket'
+          });
+        }
+      }
+    }
+
+    parseList(new Set<string>());
+
+    invalidBrackets.sort((a, b) => {
+      if (a.range.startLineNumber !== b.range.startLineNumber) {
+        return a.range.startLineNumber - b.range.startLineNumber;
+      }
+      return a.range.startColumn - b.range.startColumn;
+    });
+
+    return invalidBrackets;
   }
 }

@@ -11,6 +11,7 @@
 import { ITextBuffer } from '../core/buffer/ITextBuffer';
 import { Viewport } from './Viewport';
 import { RangeUtil } from './RangeUtil';
+import { IInvalidBracket } from '../core/language/BracketMatching';
 
 export interface ILineToken {
   startIndex: number;
@@ -27,6 +28,7 @@ export class RenderedLinesCollection {
   private readonly viewport: Viewport;
   private renderedMap: Map<number, HTMLElement> = new Map();
   private tokensProvider: ILineTokensProvider | null = null;
+  private invalidBracketsMap: Map<number, IInvalidBracket[]> = new Map();
 
   constructor(
     container: HTMLElement,
@@ -36,6 +38,26 @@ export class RenderedLinesCollection {
     this.container = container;
     this.viewport = viewport;
     this.tokensProvider = tokensProvider;
+  }
+
+  /**
+   * Set or update invalid bracket decorations.
+   */
+  setInvalidBrackets(invalidBrackets: IInvalidBracket[]): void {
+    this.invalidBracketsMap.clear();
+    for (const b of invalidBrackets) {
+      const line = b.range.startLineNumber;
+      let list = this.invalidBracketsMap.get(line);
+      if (!list) {
+        list = [];
+        this.invalidBracketsMap.set(line, list);
+      }
+      list.push(b);
+    }
+  }
+
+  getInvalidBrackets(lineNumber: number): IInvalidBracket[] | undefined {
+    return this.invalidBracketsMap.get(lineNumber);
   }
 
   /**
@@ -154,7 +176,9 @@ export class RenderedLinesCollection {
   }
 
   /**
-   * Internal line content renderer supporting both plain text and tokenized spans.
+   * Internal line content renderer supporting both plain text, tokenized spans,
+   * and unexpected / unclosed bracket highlighting.
+   * Derived from VS Code view line renderer and colorizedBracketPairsDecorationProvider.
    */
   private renderLineContent(
     lineEl: HTMLElement,
@@ -171,53 +195,102 @@ export class RenderedLinesCollection {
     }
 
     const tokens = provider ? provider.getLineTokens(line) : undefined;
+    const invalidBrackets = this.invalidBracketsMap.get(line);
 
-    // Fast path: no tokens for this line, render plain text directly
-    if (!tokens || tokens.length === 0) {
+    // Fast path: no tokens and no invalid brackets for this line, render plain text directly
+    if ((!tokens || tokens.length === 0) && (!invalidBrackets || invalidBrackets.length === 0)) {
       lineEl.textContent = text;
       return;
     }
 
-    // Tokenized path: slice text into spans and plain text gaps
-    const fragment = document.createDocumentFragment();
-    let currentIdx = 0;
     const len = text.length;
+    const boundarySet = new Set<number>([0, len]);
 
-    // Ensure tokens are sorted by start index
-    const sortedTokens = [...tokens].sort((a, b) => a.startIndex - b.startIndex);
+    if (tokens) {
+      for (const t of tokens) {
+        boundarySet.add(Math.max(0, Math.min(len, t.startIndex)));
+        boundarySet.add(Math.max(0, Math.min(len, t.endIndex)));
+      }
+    }
 
-    for (const token of sortedTokens) {
-      const start = Math.max(0, Math.min(len, token.startIndex));
-      const end = Math.max(start, Math.min(len, token.endIndex));
+    if (invalidBrackets) {
+      for (const b of invalidBrackets) {
+        // Convert 1-based columns to 0-based character offsets
+        const startOffset = Math.max(0, Math.min(len, b.range.startColumn - 1));
+        const endOffset = Math.max(0, Math.min(len, b.range.endColumn - 1));
+        boundarySet.add(startOffset);
+        boundarySet.add(endOffset);
+      }
+    }
 
-      // Append text gap before token
-      if (start > currentIdx) {
-        const gapText = text.slice(currentIdx, start);
-        fragment.appendChild(document.createTextNode(gapText));
-        currentIdx = start;
+    const boundaries = Array.from(boundarySet).sort((a, b) => a - b);
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      const start = boundaries[i];
+      const end = boundaries[i + 1];
+      if (start >= end) {
+        continue;
       }
 
-      // Append styled token span
-      if (end > currentIdx) {
-        const span = document.createElement('span');
-        const sanitizedType = token.type.replace(/[^a-zA-Z0-9_-]/g, '-');
-        const baseType = sanitizedType.split('-')[0];
-        if (baseType !== sanitizedType) {
-          span.className = `mtk-${sanitizedType} mythic-token-${sanitizedType} mtk-${baseType} mythic-token-${baseType}`;
-        } else {
-          span.className = `mtk-${sanitizedType} mythic-token-${sanitizedType}`;
+      const sliceText = text.slice(start, end);
+      if (!sliceText) {
+        continue;
+      }
+
+      // Check if this slice falls within an invalid bracket
+      const isInvalid = invalidBrackets?.some(b => {
+        const bStart = b.range.startColumn - 1;
+        const bEnd = b.range.endColumn - 1;
+        return start >= bStart && end <= bEnd;
+      }) ?? false;
+
+      // Find the covering token if any (taking the latest / most specific if overlapping)
+      let tokenType: string | undefined;
+      if (tokens) {
+        for (const t of tokens) {
+          if (start >= t.startIndex && end <= t.endIndex) {
+            tokenType = t.type;
+            break;
+          }
         }
-        span.textContent = text.slice(currentIdx, end);
+      }
+
+      if (isInvalid || tokenType) {
+        const span = document.createElement('span');
+        const classes: string[] = [];
+
+        if (tokenType) {
+          const sanitizedType = tokenType.replace(/[^a-zA-Z0-9_-]/g, '-');
+          const baseType = sanitizedType.split('-')[0];
+          if (baseType !== sanitizedType) {
+            classes.push(`mtk-${sanitizedType}`, `mythic-token-${sanitizedType}`, `mtk-${baseType}`, `mythic-token-${baseType}`);
+          } else {
+            classes.push(`mtk-${sanitizedType}`, `mythic-token-${sanitizedType}`);
+          }
+        }
+
+        if (isInvalid) {
+          // Faithfully matches VS Code colorizedBracketPairsDecorationProvider:
+          // 'unexpected-closing-bracket' class applied to invalid bracket
+          classes.push('unexpected-closing-bracket', 'mtk-unexpected-closing-bracket');
+        }
+
+        span.className = classes.join(' ');
+        span.textContent = sliceText;
         fragment.appendChild(span);
-        currentIdx = end;
+      } else {
+        fragment.appendChild(document.createTextNode(sliceText));
       }
     }
 
-    // Append any trailing plain text
-    if (currentIdx < len) {
-      fragment.appendChild(document.createTextNode(text.slice(currentIdx)));
+    if (typeof (lineEl as any).replaceChildren === 'function') {
+      lineEl.replaceChildren(fragment);
+    } else {
+      while (lineEl.childNodes && lineEl.childNodes.length > 0) {
+        lineEl.removeChild(lineEl.childNodes[0]);
+      }
+      lineEl.appendChild(fragment);
     }
-
-    lineEl.replaceChildren(fragment);
   }
 }

@@ -13,6 +13,7 @@
   --mythic-line-highlight-border: #383e4a;
   --mythic-bracket-match-border: #888888;
   --mythic-bracket-match-bg: transparent;
+  --mythic-bracket-unexpected: #ff1212db;
   --mythic-cursor-color: #528bff;
   --mythic-gutter-bg: #282c34;
   --mythic-gutter-fg: #495162;
@@ -231,4 +232,11 @@
 .mtk-constant, .mythic-token-constant { color: var(--mythic-token-constant, #d19a66); }
 .mtk-constant-builtin, .mythic-token-constant-builtin { color: var(--mythic-token-constant-builtin, #e5c07b); }
 .mtk-punctuation, .mythic-token-punctuation { color: var(--mythic-token-punctuation, #abb2bf); }
+
+/* Bracket Pair Highlighting & Unexpected Brackets (Monaco/VS Code compliant) */
+.unexpected-closing-bracket,
+.mtk-unexpected-closing-bracket {
+  color: var(--mythic-bracket-unexpected, #ff1212db) !important;
+  font-weight: 600;
+}
 

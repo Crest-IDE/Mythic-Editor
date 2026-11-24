@@ -6,6 +6,7 @@ import {
 } from '@mythic/view/RenderedLinesCollection';
 import { Viewport } from '@mythic/view/Viewport';
 import { PieceTreeTextBuffer } from '@mythic/core/buffer/PieceTreeTextBuffer';
+import { Range } from '@mythic/core/model/Range';
 
 // Minimal DOM mock for Node environment
 class MockNode {
@@ -173,5 +174,29 @@ describe('RenderedLinesCollection - Tree-sitter & Syntax Highlighting', () => {
     collection.update(1, 1, buffer);
     const lineEl = container.childNodes[0] as MockElement;
     expect(lineEl.textContent).toBe('\u00a0');
+  });
+
+  it('renders invalid unexpected and unclosed brackets with unexpected-closing-bracket class', () => {
+    const container = new MockElement();
+    const collection = new RenderedLinesCollection(container as any, viewport);
+    const buffer = new PieceTreeTextBuffer('const x = 1);', '\n');
+
+    collection.setInvalidBrackets([
+      {
+        range: new Range(1, 12, 1, 13),
+        char: ')',
+        type: 'unexpected-closing-bracket'
+      }
+    ]);
+
+    collection.update(1, 1, buffer);
+    const lineEl = container.childNodes[0] as MockElement;
+    expect(lineEl.childNodes.length).toBe(3);
+    expect(lineEl.childNodes[0].textContent).toBe('const x = 1');
+    const invalidSpan = lineEl.childNodes[1] as MockElement;
+    expect(invalidSpan.textContent).toBe(')');
+    expect(invalidSpan.className).toContain('unexpected-closing-bracket');
+    expect(invalidSpan.className).toContain('mtk-unexpected-closing-bracket');
+    expect(lineEl.childNodes[2].textContent).toBe(';');
   });
 });
