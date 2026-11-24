@@ -140,6 +140,38 @@ describe('ViewBracketMatch Subsystem (Box Outline Highlighting)', () => {
     expect(openEl.style.transform).toBe('translate3d(0px, 0px, 0)');
     // Close element at col 7: left = 6 * 8.4 = 50.4px
     expect(closeEl.style.transform).toBe('translate3d(50.4px, 0px, 0)');
+    expect(bracketMatch.isMerged()).toBe(false);
+  });
+
+  it('merges adjacent brackets into a single unified box outline just like VS Code', () => {
+    const viewport = new Viewport(21, 8.4);
+    const bracketMatch = new ViewBracketMatch(viewport);
+    const buffer = new PieceTreeTextBuffer('()', '\n');
+
+    const match = {
+      open: new Range(1, 1, 1, 2),
+      close: new Range(1, 2, 1, 3)
+    };
+
+    bracketMatch.update(match, buffer);
+
+    expect(bracketMatch.isMerged()).toBe(true);
+
+    const openEl = bracketMatch.getOpenElement() as unknown as MockElement;
+    const closeEl = bracketMatch.getCloseElement() as unknown as MockElement;
+
+    // Must be a single unified element wrapping both brackets together
+    expect(openEl).not.toBeNull();
+    expect(openEl.style.display).toBe('block');
+    expect(openEl.className).toBe('mythic-bracket-match');
+    expect(openEl.style.transform).toBe('translate3d(0px, 0px, 0)');
+    // Total width wraps both characters: 2 * 8.4 = 16.8px
+    expect(openEl.style.width).toBe('16.8px');
+
+    // Close element is hidden so there is no double border or middle dividing line
+    if (closeEl) {
+      expect(closeEl.style.display).toBe('none');
+    }
   });
 
   it('clears and hides outline elements when match is null', () => {

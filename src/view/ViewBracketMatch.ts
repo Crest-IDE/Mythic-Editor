@@ -24,6 +24,7 @@ export class ViewBracketMatch {
   private openEl: HTMLElement | null = null;
   private closeEl: HTMLElement | null = null;
   private currentMatch: BracketMatch | null = null;
+  private isCurrentlyMerged: boolean = false;
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
@@ -33,6 +34,13 @@ export class ViewBracketMatch {
 
   /**
    * Update the bracket match box outlines for the active bracket pair.
+   *
+   * Monaco / VS Code Merge Rule (vs/editor/browser/viewParts/decorations/decorations.ts):
+   * When brackets are touching / adjacent (e.g. `()` or `{}` or `[]`),
+   * Range.areIntersectingOrTouching(open, close) evaluates to true.
+   * In that case, the two decorations merge via Range.plusRange(open, close)
+   * into a single unified continuous box outline enclosing both brackets without
+   * an internal divider!
    */
   update(
     match: BracketMatch | null,
@@ -55,8 +63,18 @@ export class ViewBracketMatch {
       return this.viewport.getColumnLeft(col, lineContent);
     };
 
-    this.renderBracketBox('open', match.open, getOffset);
-    this.renderBracketBox('close', match.close, getOffset);
+    if (Range.areIntersectingOrTouching(match.open, match.close)) {
+      this.isCurrentlyMerged = true;
+      const mergedRange = Range.plusRange(match.open, match.close);
+      this.renderBracketBox('open', mergedRange, getOffset);
+      if (this.closeEl) {
+        this.closeEl.style.display = 'none';
+      }
+    } else {
+      this.isCurrentlyMerged = false;
+      this.renderBracketBox('open', match.open, getOffset);
+      this.renderBracketBox('close', match.close, getOffset);
+    }
   }
 
   private renderBracketBox(
@@ -99,10 +117,15 @@ export class ViewBracketMatch {
       this.closeEl.style.display = 'none';
     }
     this.currentMatch = null;
+    this.isCurrentlyMerged = false;
   }
 
   getCurrentMatch(): BracketMatch | null {
     return this.currentMatch;
+  }
+
+  isMerged(): boolean {
+    return this.isCurrentlyMerged;
   }
 
   getOpenElement(): HTMLElement | null {

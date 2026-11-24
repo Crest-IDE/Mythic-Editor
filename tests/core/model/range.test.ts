@@ -71,4 +71,28 @@ describe('Range Model', () => {
     expect(new Range(1, 1, 1, 10).isSingleLine()).toBe(true);
     expect(new Range(1, 1, 2, 1).isSingleLine()).toBe(false);
   });
+
+  it('correctly handles areIntersectingOrTouching and plusRange (Monaco/VS Code port)', () => {
+    const r1 = new Range(1, 1, 1, 2);
+    const r2 = new Range(1, 2, 1, 3);
+    const r3 = new Range(1, 4, 1, 5);
+
+    // Touching ranges (e.g. adjacent brackets `()`)
+    expect(Range.areIntersectingOrTouching(r1, r2)).toBe(true);
+    expect(Range.areIntersecting(r1, r2)).toBe(false); // Touching is not strictly intersecting
+
+    // Disjoint ranges
+    expect(Range.areIntersectingOrTouching(r1, r3)).toBe(false);
+
+    // plusRange merges touching ranges into a single unified range
+    const merged = Range.plusRange(r1, r2);
+    expect(merged.startLineNumber).toBe(1);
+    expect(merged.startColumn).toBe(1);
+    expect(merged.endLineNumber).toBe(1);
+    expect(merged.endColumn).toBe(3);
+
+    // instance method
+    const mergedInstance = r1.plusRange(r2);
+    expect(mergedInstance.equalsRange(merged)).toBe(true);
+  });
 });

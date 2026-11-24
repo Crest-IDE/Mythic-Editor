@@ -182,6 +182,65 @@ export class Range implements IRange {
   }
 
   /**
+   * Test if the two ranges are touching or intersecting in any way.
+   * Ported faithfully from Monaco / VS Code (vs/editor/common/core/range.ts)
+   */
+  static areIntersectingOrTouching(a: IRange, b: IRange): boolean {
+    // Check if `a` is before `b`
+    if (a.endLineNumber < b.startLineNumber || (a.endLineNumber === b.startLineNumber && a.endColumn < b.startColumn)) {
+      return false;
+    }
+
+    // Check if `b` is before `a`
+    if (b.endLineNumber < a.startLineNumber || (b.endLineNumber === a.startLineNumber && b.endColumn < a.startColumn)) {
+      return false;
+    }
+
+    // These ranges must intersect or touch
+    return true;
+  }
+
+  /**
+   * A reunion of the two ranges.
+   * The smallest position will be used as the start point, and the largest one as the end point.
+   * Ported faithfully from Monaco / VS Code (vs/editor/common/core/range.ts)
+   */
+  static plusRange(a: IRange, b: IRange): Range {
+    let startLineNumber: number;
+    let startColumn: number;
+    let endLineNumber: number;
+    let endColumn: number;
+
+    if (b.startLineNumber < a.startLineNumber) {
+      startLineNumber = b.startLineNumber;
+      startColumn = b.startColumn;
+    } else if (b.startLineNumber === a.startLineNumber) {
+      startLineNumber = b.startLineNumber;
+      startColumn = Math.min(b.startColumn, a.startColumn);
+    } else {
+      startLineNumber = a.startLineNumber;
+      startColumn = a.startColumn;
+    }
+
+    if (b.endLineNumber > a.endLineNumber) {
+      endLineNumber = b.endLineNumber;
+      endColumn = b.endColumn;
+    } else if (b.endLineNumber === a.endLineNumber) {
+      endLineNumber = b.endLineNumber;
+      endColumn = Math.max(b.endColumn, a.endColumn);
+    } else {
+      endLineNumber = a.endLineNumber;
+      endColumn = a.endColumn;
+    }
+
+    return new Range(startLineNumber, startColumn, endLineNumber, endColumn);
+  }
+
+  plusRange(range: IRange): Range {
+    return Range.plusRange(this, range);
+  }
+
+  /**
    * Intersect two ranges. Returns null if they do not intersect.
    */
   static intersectRanges(a: IRange, b: IRange): Range | null {
