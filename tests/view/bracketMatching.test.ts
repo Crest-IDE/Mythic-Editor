@@ -258,4 +258,43 @@ describe('ViewBracketMatch Subsystem (Box Outline Highlighting)', () => {
     expect(viewBM.getCurrentMatch()).not.toBeNull();
     expect(viewBM.getOpenElement()?.style.display).toBe('block');
   });
+
+  it('highlights function enclosing braces when cursor is anywhere inside the function body', () => {
+    const container = new MockElement() as unknown as HTMLElement;
+    const code = `function calculateTotal() {
+  const price = 100;
+  const tax = 0.18;
+  const total = price + (price * tax);
+  console.log(total);
+  return total;
+}`;
+    const buffer = new PieceTreeTextBuffer(code, '\n');
+    const editor = new EditorView(container, buffer);
+
+    // 1. Cursor on line 2 (inside function body: "const price = 100;")
+    editor.setSelection(new Selection(2, 5, 2, 5));
+    let match = editor.matchBracket();
+    expect(match).not.toBeNull();
+    expect(match?.open.startLineNumber).toBe(1);
+    expect(match?.close.startLineNumber).toBe(7);
+
+    // 2. Cursor on line 6 (inside function body: "return total;")
+    editor.setSelection(new Selection(6, 5, 6, 5));
+    match = editor.matchBracket();
+    expect(match).not.toBeNull();
+    expect(match?.open.startLineNumber).toBe(1);
+    expect(match?.close.startLineNumber).toBe(7);
+
+    // 3. Cursor inside nested parentheses on line 4: "(price * tax)"
+    // Line 4: "  const total = price + (price * tax);"
+    // '(' is at column 25
+    editor.setSelection(new Selection(4, 28, 4, 28)); // inside "(price * tax)"
+    match = editor.matchBracket();
+    expect(match).not.toBeNull();
+    expect(match?.open.startLineNumber).toBe(4);
+    expect(match?.open.startColumn).toBe(25);
+    expect(match?.close.startLineNumber).toBe(4);
+    expect(match?.close.startColumn).toBe(37);
+  });
 });
+
