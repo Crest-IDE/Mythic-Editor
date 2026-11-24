@@ -219,4 +219,43 @@ describe('ViewBracketMatch Subsystem (Box Outline Highlighting)', () => {
     editor.setMatchBrackets('never');
     expect(viewBM.getCurrentMatch()).toBeNull();
   });
+
+  it('highlights enclosing brackets when hitting Enter between () just like VS Code', () => {
+    const container = new MockElement() as unknown as HTMLElement;
+    const buffer = new PieceTreeTextBuffer('', '\n');
+    const editor = new EditorView(container, buffer);
+
+    // Type '()'
+    editor.typeText('(');
+    // AutoClosingPairs automatically inserts ')' and places cursor between them at col 2
+    expect(editor.getBuffer().getText()).toBe('()');
+    expect(editor.getSelection().getPosition().column).toBe(2);
+
+    // Press ENTER between '(' and ')'
+    editor.handleKey('ENTER');
+
+    // Buffer is split across lines with indentation:
+    // Line 1: (
+    // Line 2:     
+    // Line 3: )
+    expect(editor.getBuffer().getLineCount()).toBe(3);
+    expect(editor.getBuffer().getLineContent(1)).toBe('(');
+    expect(editor.getBuffer().getLineContent(3)).toBe(')');
+
+    // Cursor is on line 2 (inside the block)
+    const cursor = editor.getSelection().getPosition();
+    expect(cursor.lineNumber).toBe(2);
+
+    // Brackets must STILL be highlighted via findEnclosingBrackets!
+    const match = editor.matchBracket();
+    expect(match).not.toBeNull();
+    expect(match?.open.startLineNumber).toBe(1);
+    expect(match?.open.startColumn).toBe(1);
+    expect(match?.close.startLineNumber).toBe(3);
+    expect(match?.close.startColumn).toBe(1);
+
+    const viewBM = editor.getBracketMatch();
+    expect(viewBM.getCurrentMatch()).not.toBeNull();
+    expect(viewBM.getOpenElement()?.style.display).toBe('block');
+  });
 });

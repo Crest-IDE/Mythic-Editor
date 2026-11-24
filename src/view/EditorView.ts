@@ -717,12 +717,28 @@ export class EditorView {
   matchBracket(position?: Position): BracketMatch | null {
     const pos = position ?? this.selection.getPosition();
     const brackets = LanguageConfigurationRegistry.getInstance().getBrackets(this.languageId);
-    return BracketMatching.matchBracket(
+    const tokensProvider = this.linesCollection.getTokensProvider() ?? undefined;
+
+    // 1. Direct bracket match (when cursor is on or adjacent to bracket)
+    let match = BracketMatching.matchBracket(
       this.buffer,
       pos,
       brackets,
-      this.linesCollection.getTokensProvider() ?? undefined
+      tokensProvider
     );
+
+    // 2. Enclosing brackets match (when cursor is inside a block, e.g. after pressing Enter between brackets)
+    // Matches Monaco/VS Code: if (!brackets && this._matchBrackets === 'always')
+    if (!match && (this.matchBrackets === 'always' || this.matchBrackets === true)) {
+      match = BracketMatching.findEnclosingBrackets(
+        this.buffer,
+        pos,
+        brackets,
+        tokensProvider
+      );
+    }
+
+    return match;
   }
 
   jumpToBracket(): boolean {
@@ -731,7 +747,7 @@ export class EditorView {
       return false;
     }
     const pos = this.selection.getPosition();
-    if (match.open.containsPosition(pos)) {
+    if (match.open.containsPosition(pos) || pos.isBefore(match.close.getStartPosition())) {
       this.setSelection(new Selection(match.close.startLineNumber, match.close.startColumn, match.close.startLineNumber, match.close.startColumn));
       this.revealLine(match.close.startLineNumber, match.close.startColumn, true);
       return true;
@@ -748,14 +764,7 @@ export class EditorView {
       return;
     }
 
-    const pos = this.selection.getPosition();
-    const brackets = LanguageConfigurationRegistry.getInstance().getBrackets(this.languageId);
-    const match = BracketMatching.matchBracket(
-      this.buffer,
-      pos,
-      brackets,
-      this.linesCollection.getTokensProvider() ?? undefined
-    );
+    const match = this.matchBracket();
 
     this.bracketMatch.update(
       match,

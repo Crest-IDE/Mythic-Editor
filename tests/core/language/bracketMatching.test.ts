@@ -131,4 +131,47 @@ describe('BracketMatching Core Subsystem', () => {
     const match = BracketMatching.matchBracket(buffer, pos);
     expect(match).toBeNull();
   });
+
+  it('finds enclosing brackets when cursor is between brackets after pressing Enter (multiline)', () => {
+    // Simulated buffer after pressing Enter between ():
+    // Line 1: (
+    // Line 2:     
+    // Line 3: )
+    const buffer = new PieceTreeTextBuffer('(\n    \n)', '\n');
+    const cursorInside = new Position(2, 5); // on indented empty line
+
+    // matchBracket returns null because line 2 has no brackets directly at cursor
+    expect(BracketMatching.matchBracket(buffer, cursorInside)).toBeNull();
+
+    // findEnclosingBrackets finds '(' on line 1 and ')' on line 3
+    const enclosing = BracketMatching.findEnclosingBrackets(buffer, cursorInside);
+    expect(enclosing).not.toBeNull();
+    expect(enclosing?.open.startLineNumber).toBe(1);
+    expect(enclosing?.open.startColumn).toBe(1);
+    expect(enclosing?.close.startLineNumber).toBe(3);
+    expect(enclosing?.close.startColumn).toBe(1);
+  });
+
+  it('finds enclosing braces for nested code blocks', () => {
+    const text = 'function test() {\n  if (true) {\n    const x = 1;\n  }\n}';
+    const buffer = new PieceTreeTextBuffer(text, '\n');
+
+    // Cursor inside if-statement on line 3, col 10
+    const innerPos = new Position(3, 10);
+    const innerMatch = BracketMatching.findEnclosingBrackets(buffer, innerPos);
+    expect(innerMatch).not.toBeNull();
+    expect(innerMatch?.open.startLineNumber).toBe(2);
+    expect(innerMatch?.close.startLineNumber).toBe(4);
+  });
+
+  it('finds enclosing brackets on the same line when cursor is separated by spaces', () => {
+    const buffer = new PieceTreeTextBuffer('foo(   )', '\n');
+    const pos = new Position(1, 6); // between '(' at col 4 and ')' at col 8
+    expect(BracketMatching.matchBracket(buffer, pos)).toBeNull();
+
+    const enclosing = BracketMatching.findEnclosingBrackets(buffer, pos);
+    expect(enclosing).not.toBeNull();
+    expect(enclosing?.open.startColumn).toBe(4);
+    expect(enclosing?.close.startColumn).toBe(8);
+  });
 });

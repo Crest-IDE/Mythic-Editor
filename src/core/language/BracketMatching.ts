@@ -6,7 +6,8 @@
  * Reference: vs/editor/common/model/bracketPairsTextModelPart/bracketPairsImpl.ts
  *
  * Implements high-performance bracket pair matching, search depth scanning across lines,
- * and smart cursor detection (immediately before or after bracket).
+ * smart cursor detection (immediately before or after bracket), and enclosing brackets
+ * resolution for blocks when cursor is between brackets (e.g. after pressing Enter).
  */
 
 import { ITextBuffer } from '../buffer/ITextBuffer';
@@ -128,6 +129,76 @@ export class BracketMatching {
               open: new Range(match.lineNumber, match.column, match.lineNumber, match.column + open.length),
               close: new Range(position.lineNumber, charIdx + 1, position.lineNumber, charIdx + 1 + close.length)
             };
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Find enclosing brackets for the current cursor position.
+   * Useful when cursor is inside a block (e.g. after pressing Enter between brackets).
+   * Faithfully ported from Monaco / VS Code (vs/editor/common/model/bracketPairsTextModelPart/bracketPairsImpl.ts).
+   */
+  public static findEnclosingBrackets(
+    buffer: ITextBuffer,
+    position: Position,
+    brackets: CharacterPair[] = BracketMatching.DEFAULT_BRACKETS,
+    tokensProvider?: IBracketSearchTokenProvider,
+    maxLinesScan: number = 2000
+  ): BracketMatch | null {
+    const lineCount = buffer.getLineCount();
+    if (position.lineNumber < 1 || position.lineNumber > lineCount) {
+      return null;
+    }
+
+    const counts = new Map<string, number>();
+    for (const [open] of brackets) {
+      counts.set(open, 0);
+    }
+
+    const endLine = Math.min(lineCount, position.lineNumber + maxLinesScan);
+
+    for (let l = position.lineNumber; l <= endLine; l++) {
+      const lineText = buffer.getLineContent(l);
+      const startIdx = (l === position.lineNumber) ? Math.max(0, position.column - 1) : 0;
+
+      for (let i = startIdx; i < lineText.length; i++) {
+        if (this.isIgnoredToken(l, i, tokensProvider)) {
+          continue;
+        }
+
+        for (const [open, close] of brackets) {
+          if (lineText.startsWith(open, i)) {
+            counts.set(open, (counts.get(open) || 0) + 1);
+            i += open.length - 1;
+            break;
+          } else if (lineText.startsWith(close, i)) {
+            const currentCount = counts.get(open) || 0;
+            if (currentCount > 0) {
+              counts.set(open, currentCount - 1);
+            } else {
+              // Found unmatched closing bracket forward! Search backwards for matching opening bracket.
+              const openPos = this.findMatchingOpening(
+                buffer,
+                l,
+                i,
+                open,
+                close,
+                tokensProvider,
+                maxLinesScan
+              );
+              if (openPos && openPos.isBeforeOrEqual(position)) {
+                return {
+                  open: new Range(openPos.lineNumber, openPos.column, openPos.lineNumber, openPos.column + open.length),
+                  close: new Range(l, i + 1, l, i + 1 + close.length)
+                };
+              }
+            }
+            i += close.length - 1;
+            break;
           }
         }
       }
