@@ -9,6 +9,7 @@ export * from './ViewGutter';
 export * from './ViewCursor';
 export * from './ViewSelection';
 export * from './ViewCurrentLineHighlight';
+export * from './ViewBracketMatch';
 export * from './RangeUtil';
 export * from './InputController';
 export * from './AutoClosingPairs';

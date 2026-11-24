@@ -11,6 +11,8 @@
   --mythic-line-highlight-bg: #2c313a;
   --mythic-line-highlight-inactive-bg: rgba(255, 255, 255, 0.02);
   --mythic-line-highlight-border: #383e4a;
+  --mythic-bracket-match-border: #888888;
+  --mythic-bracket-match-bg: transparent;
   --mythic-cursor-color: #528bff;
   --mythic-gutter-bg: #282c34;
   --mythic-gutter-fg: #495162;
@@ -143,6 +145,26 @@
   position: absolute;
   background-color: var(--mythic-selection-bg, #3e4451);
   border-radius: 2px;
+}
+
+/* Bracket Match Layer (VS Code Box Outline Highlighting) */
+.mythic-bracket-match-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.mythic-bracket-match {
+  position: absolute;
+  box-sizing: border-box;
+  background-color: var(--mythic-bracket-match-bg, transparent);
+  border: 1px solid var(--mythic-bracket-match-border, #888888);
+  border-radius: 1px;
+  pointer-events: none;
 }
 
 /* Caret Cursor */

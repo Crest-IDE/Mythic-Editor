@@ -16,6 +16,8 @@ import { ViewGutter } from './ViewGutter';
 import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
 import { ViewCurrentLineHighlight, LineHighlightMode } from './ViewCurrentLineHighlight';
+import { ViewBracketMatch } from './ViewBracketMatch';
+import { BracketMatching, BracketMatch } from '../core/language/BracketMatching';
 import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
 import { EditStack } from '../core/model/EditStack';
@@ -33,6 +35,7 @@ export interface IEditorOptions {
   filename?: string;
   tokensProvider?: ILineTokensProvider;
   renderLineHighlight?: LineHighlightMode;
+  matchBrackets?: 'always' | 'near' | 'never' | boolean;
   onDidChangeContent?: (buffer: ITextBuffer) => void;
   onSave?: (content: string) => void;
 }
@@ -53,6 +56,7 @@ export class EditorView {
   private cursor: ViewCursor;
   private selectionOverlay: ViewSelection;
   private lineHighlight: ViewCurrentLineHighlight;
+  private bracketMatch: ViewBracketMatch;
   private inputController: InputController;
 
   private selection: Selection = new Selection(1, 1, 1, 1);
@@ -62,6 +66,7 @@ export class EditorView {
   private maxLineWidth: number = 0;
   private editStack: EditStack = new EditStack();
   private languageId: string = 'plaintext';
+  private matchBrackets: 'always' | 'near' | 'never' | boolean = 'always';
 
   constructor(targetElement: HTMLElement, buffer: ITextBuffer, options: IEditorOptions = {}) {
     this.buffer = buffer;
@@ -111,6 +116,10 @@ export class EditorView {
     this.cursor = new ViewCursor(this.viewport);
     this.selectionOverlay = new ViewSelection(this.viewport);
     this.lineHighlight = new ViewCurrentLineHighlight(this.viewport, options.renderLineHighlight ?? 'all');
+    this.bracketMatch = new ViewBracketMatch(this.viewport);
+    if (options.matchBrackets !== undefined) {
+      this.matchBrackets = options.matchBrackets;
+    }
 
     // Input Controller
     this.inputController = new InputController(this.viewport, {
@@ -128,6 +137,7 @@ export class EditorView {
     // Assemble DOM
     this.linesContent.appendChild(this.lineHighlight.element);
     this.linesContent.appendChild(this.selectionOverlay.container);
+    this.linesContent.appendChild(this.bracketMatch.container);
     this.linesContent.appendChild(this.cursor.element);
     this.linesContent.appendChild(this.inputController.textArea);
 
@@ -163,6 +173,7 @@ export class EditorView {
     this.linesContent.style.left = `${this.viewport.gutterWidth}px`;
     this.linesCollection.flush();
     this.gutter.flush();
+    this.bracketMatch.clear();
     this.selection = new Selection(1, 1, 1, 1);
     this.scrollContainer.scrollTop = 0;
     this.scrollContainer.scrollLeft = 0;
@@ -292,6 +303,7 @@ export class EditorView {
   private updateLineHighlightState(): void {
     const pos = this.selection.getPosition();
     this.lineHighlight.update(pos.lineNumber, this.selection.isEmpty(), this.isFocused);
+    this.updateBracketMatch();
     if (this.isFocused) {
       this.gutter.container.classList.remove('inactive');
     } else {
@@ -331,6 +343,7 @@ export class EditorView {
       this.shouldRenderGutterHighlight() ? pos.lineNumber : undefined
     );
     this.lineHighlight.update(pos.lineNumber, newSelection.isEmpty(), this.isFocused);
+    this.updateBracketMatch();
   }
 
   typeText(text: string): void {
@@ -522,6 +535,7 @@ export class EditorView {
     this.inputController.updatePosition(pos, lineContent, pixelLeft);
     this.lineHighlight.update(pos.lineNumber, this.selection.isEmpty(), this.isFocused);
     this.lineHighlight.updateWidth(Math.max(this.maxLineWidth, this.viewport.width));
+    this.updateBracketMatch();
   }
 
   private bindEvents(): void {
@@ -683,6 +697,71 @@ export class EditorView {
 
   getLineHighlight(): ViewCurrentLineHighlight {
     return this.lineHighlight;
+  }
+
+  // --- Public Bracket Match API (VS Code Port) ---
+  getBracketMatch(): ViewBracketMatch {
+    return this.bracketMatch;
+  }
+
+  setMatchBrackets(mode: 'always' | 'near' | 'never' | boolean): void {
+    this.matchBrackets = mode;
+    this.options.matchBrackets = mode;
+    this.updateBracketMatch();
+  }
+
+  getMatchBrackets(): 'always' | 'near' | 'never' | boolean {
+    return this.matchBrackets;
+  }
+
+  matchBracket(position?: Position): BracketMatch | null {
+    const pos = position ?? this.selection.getPosition();
+    const brackets = LanguageConfigurationRegistry.getInstance().getBrackets(this.languageId);
+    return BracketMatching.matchBracket(
+      this.buffer,
+      pos,
+      brackets,
+      this.linesCollection.getTokensProvider() ?? undefined
+    );
+  }
+
+  jumpToBracket(): boolean {
+    const match = this.matchBracket();
+    if (!match) {
+      return false;
+    }
+    const pos = this.selection.getPosition();
+    if (match.open.containsPosition(pos)) {
+      this.setSelection(new Selection(match.close.startLineNumber, match.close.startColumn, match.close.startLineNumber, match.close.startColumn));
+      this.revealLine(match.close.startLineNumber, match.close.startColumn, true);
+      return true;
+    } else {
+      this.setSelection(new Selection(match.open.startLineNumber, match.open.startColumn, match.open.startLineNumber, match.open.startColumn));
+      this.revealLine(match.open.startLineNumber, match.open.startColumn, true);
+      return true;
+    }
+  }
+
+  private updateBracketMatch(): void {
+    if (this.matchBrackets === 'never' || this.matchBrackets === false || !this.selection.isEmpty() || !this.isFocused) {
+      this.bracketMatch.clear();
+      return;
+    }
+
+    const pos = this.selection.getPosition();
+    const brackets = LanguageConfigurationRegistry.getInstance().getBrackets(this.languageId);
+    const match = BracketMatching.matchBracket(
+      this.buffer,
+      pos,
+      brackets,
+      this.linesCollection.getTokensProvider() ?? undefined
+    );
+
+    this.bracketMatch.update(
+      match,
+      this.buffer,
+      (line, col) => this.linesCollection.getHorizontalOffset(line, col)
+    );
   }
 
   // --- Public Undo / Redo API (Monaco Port) ---
