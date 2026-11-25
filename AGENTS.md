@@ -3,8 +3,12 @@ Core Rule
 No guessing, inventing, or writing replacement implementations from scratch. Every implementation must be grounded in actual Monaco/VS Code source code.
 
 Source-First Development
-manaco editor: ~/project/monaco-editor
-vscode: ~/project/vscode
+
+source code:
+~/repos/helix
+~/repos/vscode
+~/repos/neovim
+
 
 - Inspect the relevant Monaco/VS Code source before making any changes.
 - Find the exact implementation, dependencies, interfaces, and call flow.

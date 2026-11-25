@@ -25,8 +25,8 @@
   --mythic-token-function: #61afef;
   --mythic-token-function-builtin: #56b6c2;
   --mythic-token-function-method: #61afef;
-  --mythic-token-variable: #e06c75;
-  --mythic-token-variable-parameter: #d19a66;
+  --mythic-token-variable: #abb2bf;
+  --mythic-token-variable-parameter: #abb2bf;
   --mythic-token-variable-builtin: #e5c07b;
   --mythic-token-property: #e5c07b;
   --mythic-token-type: #e5c07b;
@@ -219,8 +219,8 @@
 .mtk-function, .mythic-token-function { color: var(--mythic-token-function, #61afef); }
 .mtk-function-builtin, .mythic-token-function-builtin { color: var(--mythic-token-function-builtin, #56b6c2); }
 .mtk-function-method, .mythic-token-function-method { color: var(--mythic-token-function-method, #61afef); }
-.mtk-variable, .mythic-token-variable { color: var(--mythic-token-variable, #e06c75); }
-.mtk-variable-parameter, .mythic-token-variable-parameter { color: var(--mythic-token-variable-parameter, #d19a66); font-style: italic; }
+.mtk-variable, .mythic-token-variable { color: var(--mythic-token-variable, #abb2bf); }
+.mtk-variable-parameter, .mythic-token-variable-parameter { color: var(--mythic-token-variable-parameter, #abb2bf); font-style: italic; }
 .mtk-variable-builtin, .mythic-token-variable-builtin { color: var(--mythic-token-variable-builtin, #e5c07b); font-style: italic; }
 .mtk-property, .mythic-token-property { color: var(--mythic-token-property, #e5c07b); }
 .mtk-tag, .mythic-token-tag { color: var(--mythic-token-tag, #e06c75); }
