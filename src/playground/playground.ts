@@ -77,11 +77,28 @@ print(f"Generated {len(primes)} primes: {primes}")
 </body>
 </html>`,
 
+  css: `/* Modern Responsive CSS */
+:root {
+  --primary-color: #3498db;
+  --bg-dark: #1e1e24;
+  --font-base: 'Fira Code', monospace;
+}
+
+@media (max-width: 768px) {
+  header.main-header > nav ul#menu li.item {
+    display: flex;
+    color: var(--primary-color);
+    font-size: 16px;
+    margin: 10px auto !important;
+  }
+}
+`,
+
   unicode: `// Unicode & Astral Planes Test
 const greeting = "नमस्ते दुनिया!"; // Devanagari
 const chinese = "你好，世界！"; // CJK
 const arabic = "مرحبا بالعالم"; // RTL Arabic
-const emojis = "🚀 😈 🔥 💀 ⚡ 😀"; // Astral Emojis
+const emojis = "🚀 ⭐ 🔥 🙋 ⚡ 😀"; // Astral Emojis
 const math = "∀x ∈ ℝ: x² ≥ 0"; // Math symbols`,
 
   multiline: Array.from({ length: 100 }, (_, i) => `Line ${i + 1}: The quick brown fox jumps over the lazy dog (${i * 10})`).join('\n')
@@ -91,6 +108,7 @@ const SAMPLE_LANGUAGES: Record<string, string> = {
   basic: 'typescript',
   python: 'python',
   html: 'html',
+  css: 'css',
   unicode: 'javascript',
   multiline: 'typescript'
 };
@@ -118,7 +136,7 @@ class PlaygroundApp {
     if (this.highlighter) {
       if (this.highlighter.getLanguage() !== language) {
         if (!TreeSitterHighlighter.hasLanguage(language)) {
-          this.log(`⏳ Loading Tree-sitter grammar for ${language}...`);
+          this.log(`Loading Tree-sitter grammar for ${language}...`);
           await TreeSitterHighlighter.loadLanguage(language);
         }
         this.highlighter.setLanguage(language);
@@ -152,19 +170,19 @@ class PlaygroundApp {
 
   private async loadTreeSitter(buffer: PieceTreeTextBuffer, language: string = 'typescript'): Promise<void> {
     try {
-      this.log(`⏳ Initializing Tree-sitter WebAssembly parser (${language})...`);
+      this.log(`Initializing Tree-sitter WebAssembly parser (${language})...`);
       const highlighter = new TreeSitterHighlighter(language);
       const ok = await highlighter.ready();
       if (ok) {
         this.highlighter = highlighter;
         this.highlighter.update(buffer);
         this.editorView.setTokensProvider(this.highlighter);
-        this.log(`✅ Tree-sitter active (${language})! Syntax highlighting live.`);
+        this.log(`Tree-sitter active (${language})! Syntax highlighting live.`);
       } else {
-        this.log(`⚠️ Tree-sitter parser could not be initialized for ${language}.`);
+        this.log(`Tree-sitter parser could not be initialized for ${language}.`);
       }
     } catch (err: any) {
-      this.log(`⚠️ Tree-sitter notice: ${err?.message || err}`);
+      this.log(`Tree-sitter notice: ${err?.message || err}`);
     }
   }
 

@@ -326,6 +326,28 @@ export class LanguageConfigurationRegistry {
 
     this.registerFileExtension('html', 'html');
     this.registerFileExtension('htm', 'html');
+
+    this.register('css', {
+      id: 'css',
+      comments: { blockComment: ['/*', '*/'] },
+      brackets: defaultBrackets,
+      autoClosingPairs: [
+        { open: '{', close: '}' },
+        { open: '[', close: ']' },
+        { open: '(', close: ')' },
+        { open: '"', close: '"' },
+        { open: "'", close: "'" }
+      ],
+      surroundingPairs: defaultSurrounding,
+      indentation: { tabSize: 2, insertSpaces: true },
+      indentationRules: {
+        increaseIndentPattern: /(^.*\{[^}]*$)/,
+        decreaseIndentPattern: /^\s*\}/
+      },
+      grammar: 'css'
+    });
+
+    this.registerFileExtension('css', 'css');
   }
 
   /**

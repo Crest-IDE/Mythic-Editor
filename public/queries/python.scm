@@ -92,9 +92,10 @@
   "exec"
   "global"
   "nonlocal"
-  "print"
   "type"
 ] @keyword
+
+(print_statement "print" @function.builtin)
 
 ; Operators
 [
