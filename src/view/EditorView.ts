@@ -17,7 +17,9 @@ import { ViewCursor } from './ViewCursor';
 import { ViewSelection } from './ViewSelection';
 import { ViewCurrentLineHighlight, LineHighlightMode } from './ViewCurrentLineHighlight';
 import { ViewBracketMatch } from './ViewBracketMatch';
+import { ViewIndentGuides, IGuidesOptions } from './ViewIndentGuides';
 import { BracketMatching, BracketMatch, IInvalidBracket } from '../core/language/BracketMatching';
+import { guessIndentation } from '../core/language/IndentationGuesser';
 import { InputController } from './InputController';
 import { AutoClosingPairs } from './AutoClosingPairs';
 import { EditStack } from '../core/model/EditStack';
@@ -33,6 +35,10 @@ export interface IEditorOptions {
   lineHeight?: number;
   languageId?: string;
   filename?: string;
+  tabSize?: number;
+  indentSize?: number;
+  detectIndentation?: boolean;
+  guides?: IGuidesOptions;
   tokensProvider?: ILineTokensProvider;
   renderLineHighlight?: LineHighlightMode;
   matchBrackets?: 'always' | 'near' | 'never' | boolean;
@@ -57,6 +63,7 @@ export class EditorView {
   private selectionOverlay: ViewSelection;
   private lineHighlight: ViewCurrentLineHighlight;
   private bracketMatch: ViewBracketMatch;
+  private indentGuides: ViewIndentGuides;
   private inputController: InputController;
 
   private selection: Selection = new Selection(1, 1, 1, 1);
@@ -67,6 +74,9 @@ export class EditorView {
   private editStack: EditStack = new EditStack();
   private languageId: string = 'plaintext';
   private matchBrackets: 'always' | 'near' | 'never' | boolean = 'always';
+  private tabSize: number = 4;
+  private indentSize: number = 4;
+  private offSide: boolean = false;
 
   constructor(targetElement: HTMLElement, buffer: ITextBuffer, options: IEditorOptions = {}) {
     this.buffer = buffer;
@@ -87,7 +97,7 @@ export class EditorView {
     );
 
     // 2. Initialize Viewport (Monaco layout info computation)
-    this.viewport = new Viewport(this.metrics.lineHeight, this.metrics.charWidth);
+    this.viewport = new Viewport(this.metrics.lineHeight, this.metrics.charWidth, this.metrics.spaceWidth);
     this.viewport.gutterWidth = this.viewport.computeGutterWidth(this.buffer.getLineCount());
 
     // 3. Construct DOM structure
@@ -117,9 +127,11 @@ export class EditorView {
     this.selectionOverlay = new ViewSelection(this.viewport);
     this.lineHighlight = new ViewCurrentLineHighlight(this.viewport, options.renderLineHighlight ?? 'all');
     this.bracketMatch = new ViewBracketMatch(this.viewport);
+    this.indentGuides = new ViewIndentGuides(this.viewport, options.guides);
     if (options.matchBrackets !== undefined) {
       this.matchBrackets = options.matchBrackets;
     }
+    this.resolveIndentationOptions();
 
     // Input Controller
     this.inputController = new InputController(this.viewport, {
@@ -136,6 +148,7 @@ export class EditorView {
 
     // Assemble DOM
     this.linesContent.appendChild(this.lineHighlight.element);
+    this.linesContent.appendChild(this.indentGuides.container);
     this.linesContent.appendChild(this.selectionOverlay.container);
     this.linesContent.appendChild(this.bracketMatch.container);
     this.linesContent.appendChild(this.cursor.element);
@@ -174,12 +187,14 @@ export class EditorView {
     this.linesContent.style.left = `${this.viewport.gutterWidth}px`;
     this.linesCollection.flush();
     this.gutter.flush();
+    this.indentGuides.flush();
     this.bracketMatch.clear();
     this.selection = new Selection(1, 1, 1, 1);
     this.scrollContainer.scrollTop = 0;
     this.scrollContainer.scrollLeft = 0;
     this.viewport.scrollTop = 0;
     this.viewport.scrollLeft = 0;
+    this.resolveIndentationOptions();
     this.updateInvalidBrackets();
     this.layout();
     this.render();
@@ -202,6 +217,7 @@ export class EditorView {
       : langOrFilename;
 
     this.languageId = resolvedLang;
+    this.resolveIndentationOptions();
     const grammarName = registry.getGrammarName(resolvedLang);
 
     const currentProvider = this.linesCollection.getTokensProvider();
@@ -211,8 +227,8 @@ export class EditorView {
         (currentProvider as any).update(this.buffer);
       }
       this.linesCollection.refresh(this.buffer);
-      this.render();
     }
+    this.render();
   }
 
   getLanguageId(): string {
@@ -352,12 +368,14 @@ export class EditorView {
     this.cursor.updatePosition(pos, lineContent, pixelLeft);
     this.inputController.updatePosition(pos, lineContent, pixelLeft);
     this.selectionOverlay.update(newSelection, this.buffer, (line, col) => this.linesCollection.getHorizontalOffset(line, col));
+    const visible = this.viewport.getVisibleLines(this.buffer.getLineCount());
     this.gutter.update(
-      this.viewport.getVisibleLines(this.buffer.getLineCount()).startLineNumber,
-      this.viewport.getVisibleLines(this.buffer.getLineCount()).endLineNumber,
+      visible.startLineNumber,
+      visible.endLineNumber,
       this.shouldRenderGutterHighlight() ? pos.lineNumber : undefined
     );
     this.lineHighlight.update(pos.lineNumber, newSelection.isEmpty(), this.isFocused);
+    this.updateIndentGuides(visible.startLineNumber, visible.endLineNumber);
     this.updateBracketMatch();
   }
 
@@ -456,6 +474,18 @@ export class EditorView {
     if (newOptions.renderLineHighlight !== undefined) {
       this.setRenderLineHighlight(newOptions.renderLineHighlight);
     }
+    if (newOptions.guides !== undefined) {
+      this.indentGuides.setOptions(newOptions.guides);
+    }
+    if (
+      newOptions.tabSize !== undefined ||
+      newOptions.indentSize !== undefined ||
+      newOptions.detectIndentation !== undefined
+    ) {
+      this.resolveIndentationOptions();
+      this.maxLineWidth = this.computeMaxLineWidth();
+      this.updateCanvasHeight();
+    }
     if (newOptions.fontFamily || newOptions.fontSize || newOptions.lineHeight) {
       this.metrics = FontMetrics.measure(
         this.options.fontFamily ?? 'ui-monospace, SFMono-Regular, Menlo, monospace',
@@ -464,6 +494,7 @@ export class EditorView {
       );
       this.viewport.lineHeight = this.metrics.lineHeight;
       this.viewport.charWidth = this.metrics.charWidth;
+      this.viewport.spaceWidth = this.metrics.spaceWidth;
       this.rootElement.style.fontSize = `${this.metrics.fontSize}px`;
       this.layout();
       this.linesCollection.refresh(this.buffer);
@@ -473,6 +504,15 @@ export class EditorView {
       const pixelLeft = this.getPixelOffsetForPosition(pos);
       this.cursor.updatePosition(pos, lineContent, pixelLeft);
       this.inputController.updatePosition(pos, lineContent, pixelLeft);
+      return;
+    }
+    if (
+      newOptions.guides !== undefined ||
+      newOptions.tabSize !== undefined ||
+      newOptions.indentSize !== undefined ||
+      newOptions.detectIndentation !== undefined
+    ) {
+      this.render();
     }
   }
 
@@ -550,6 +590,7 @@ export class EditorView {
     this.inputController.updatePosition(pos, lineContent, pixelLeft);
     this.lineHighlight.update(pos.lineNumber, this.selection.isEmpty(), this.isFocused);
     this.lineHighlight.updateWidth(Math.max(this.maxLineWidth, this.viewport.width));
+    this.updateIndentGuides(visible.startLineNumber, visible.endLineNumber);
     this.updateBracketMatch();
   }
 
@@ -712,6 +753,67 @@ export class EditorView {
 
   getLineHighlight(): ViewCurrentLineHighlight {
     return this.lineHighlight;
+  }
+
+  // --- Public Indent Guides API (VS Code Port) ---
+  getIndentGuides(): ViewIndentGuides {
+    return this.indentGuides;
+  }
+
+  setGuides(guides: IGuidesOptions): void {
+    this.options.guides = { ...this.options.guides, ...guides };
+    this.indentGuides.setOptions(guides);
+    this.updateIndentGuides();
+  }
+
+  getTabSize(): number {
+    return this.tabSize;
+  }
+
+  getIndentSize(): number {
+    return this.indentSize;
+  }
+
+  private resolveIndentationOptions(): void {
+    const registry = LanguageConfigurationRegistry.getInstance();
+    const langConfig = registry.getLanguageConfiguration(this.languageId);
+    const defaultTabSize = this.options.tabSize ?? langConfig.indentation?.tabSize ?? 4;
+    this.offSide = Boolean(langConfig.foldingRules?.offSide);
+
+    if (
+      this.options.detectIndentation !== false &&
+      this.options.tabSize === undefined &&
+      this.options.indentSize === undefined
+    ) {
+      const guessed = guessIndentation(this.buffer, defaultTabSize, true);
+      this.tabSize = Math.max(1, guessed.tabSize);
+    } else {
+      this.tabSize = Math.max(1, defaultTabSize);
+    }
+
+    this.indentSize = Math.max(1, this.options.indentSize ?? this.tabSize);
+    this.viewport.tabSize = this.tabSize;
+    this.rootElement.style.setProperty?.('--mythic-tab-size', String(this.tabSize));
+  }
+
+  private updateIndentGuides(startLineNumber?: number, endLineNumber?: number): void {
+    const visible = (startLineNumber !== undefined && endLineNumber !== undefined)
+      ? { startLineNumber, endLineNumber }
+      : this.viewport.getVisibleLines(this.buffer.getLineCount());
+    const pos = this.selection.getPosition();
+    const scrollWidth = Math.max(this.maxLineWidth, this.viewport.width);
+    this.indentGuides.update(
+      visible.startLineNumber,
+      visible.endLineNumber,
+      this.buffer,
+      pos.lineNumber,
+      {
+        tabSize: this.tabSize,
+        indentSize: this.indentSize,
+        offSide: this.offSide
+      },
+      scrollWidth
+    );
   }
 
   // --- Public Bracket Match API (VS Code Port) ---

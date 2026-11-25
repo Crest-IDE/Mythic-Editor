@@ -113,7 +113,7 @@ class PlaygroundApp {
   private async initEditor(text: string, language: string = 'typescript'): Promise<void> {
     this.mountEl.innerHTML = '';
     const buffer = new PieceTreeTextBuffer(text, '\n');
-    this.editorView = new EditorView(this.mountEl, buffer);
+    this.editorView = new EditorView(this.mountEl, buffer, { languageId: language });
 
     if (this.highlighter) {
       if (this.highlighter.getLanguage() !== language) {

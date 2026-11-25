@@ -18,6 +18,8 @@
   --mythic-gutter-bg: #282c34;
   --mythic-gutter-fg: #495162;
   --mythic-gutter-active-fg: #abb2bf;
+  --mythic-indent-guide-color: #abb2bf26;
+  --mythic-indent-guide-active-color: #626772;
   --mythic-token-keyword: #c678dd;
   --mythic-token-string: #98c379;
   --mythic-token-comment: #5c6370;
@@ -122,12 +124,44 @@
   background-color: var(--mythic-line-highlight-inactive-bg, rgba(255, 255, 255, 0.02));
 }
 
+/* Indent Guides Layer (VS Code IndentGuidesOverlay port) */
+.mythic-indent-guides-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mythic-indent-guide-row {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.mythic-editor .mythic-lines-content .core-guide {
+  position: absolute;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.mythic-editor .mythic-lines-content .core-guide-indent {
+  box-shadow: 1px 0 0 0 var(--mythic-indent-guide-color, #abb2bf26) inset;
+}
+
+.mythic-editor .mythic-lines-content .core-guide-indent.indent-active {
+  box-shadow: 1px 0 0 0 var(--mythic-indent-guide-active-color, #626772) inset;
+}
+
 .mythic-view-line {
   position: absolute;
   left: 0;
   right: 0;
   white-space: pre;
-  tab-size: 4;
+  tab-size: var(--mythic-tab-size, 4);
   z-index: 2;
 }
 

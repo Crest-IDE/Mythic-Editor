@@ -14,12 +14,24 @@ import {
   IAutoClosingPairConditional,
   IndentAction,
   IndentationRule,
-  OnEnterRule
+  OnEnterRule,
+  FoldingRules
 } from './languageConfiguration';
 
 import rawHelixLanguages from './languages.json';
 
 export const PLAINTEXT_LANGUAGE_ID = 'plaintext';
+
+const OFFSIDE_LANGUAGES = new Set([
+  'clojure',
+  'coffeescript',
+  'fsharp',
+  'markdown',
+  'pug',
+  'python',
+  'sql',
+  'yaml'
+]);
 
 export interface ILanguageDefinitionRaw {
   id: string;
@@ -66,6 +78,7 @@ export class LanguageConfigurationRegistry {
       indentation: config.indentation || existing.indentation,
       indentationRules: config.indentationRules || existing.indentationRules,
       onEnterRules: config.onEnterRules || existing.onEnterRules,
+      foldingRules: config.foldingRules || existing.foldingRules,
       wordPattern: config.wordPattern || existing.wordPattern,
       grammar: config.grammar || existing.grammar || languageId
     };
@@ -100,6 +113,13 @@ export class LanguageConfigurationRegistry {
    */
   getComments(languageId: string): CommentRule | undefined {
     return this.getLanguageConfiguration(languageId).comments;
+  }
+
+  /**
+   * Get folding rules (e.g. offSide indentation strategy) for a language.
+   */
+  getFoldingRules(languageId: string): FoldingRules | undefined {
+    return this.getLanguageConfiguration(languageId).foldingRules;
   }
 
   /**
@@ -232,7 +252,8 @@ export class LanguageConfigurationRegistry {
       brackets: defaultBrackets,
       autoClosingPairs: defaultAutoClose,
       surroundingPairs: defaultSurrounding,
-      indentation: { tabSize: 4, insertSpaces: true }
+      indentation: { tabSize: 4, insertSpaces: true },
+      foldingRules: { offSide: true }
     });
 
     this.register('javascript', {
@@ -276,6 +297,7 @@ export class LanguageConfigurationRegistry {
         increaseIndentPattern: /:\s*(#.*)?$/,
         decreaseIndentPattern: /^\s*(elif|else|except|finally)\b.*:/
       },
+      foldingRules: { offSide: true },
       grammar: 'python'
     });
 
@@ -332,6 +354,7 @@ export class LanguageConfigurationRegistry {
           tabSize: item.tabSize || 4,
           insertSpaces: true
         },
+        foldingRules: OFFSIDE_LANGUAGES.has(item.id) ? { offSide: true } : undefined,
         grammar: item.grammar || item.id
       });
     }

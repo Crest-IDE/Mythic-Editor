@@ -60,6 +60,24 @@ export interface IndentOptions {
   insertSpaces: boolean;
 }
 
+export interface FoldingMarkers {
+  start: RegExp;
+  end: RegExp;
+}
+
+/**
+ * Describes folding rules for a language.
+ * Reference: vs/editor/common/languages/languageConfiguration.ts
+ */
+export interface FoldingRules {
+  /**
+   * Used by the indentation based strategy to decide whether empty lines belong to the previous or the next block.
+   * If not set, `false` is used and empty lines belong to the previous block.
+   */
+  offSide?: boolean;
+  markers?: FoldingMarkers;
+}
+
 /**
  * Defines the contract between language definitions and editor features
  * such as auto-closing pairs, comment toggling, brackets, and indentation.
@@ -73,6 +91,7 @@ export interface LanguageConfiguration {
   indentation?: IndentOptions;
   indentationRules?: IndentationRule;
   onEnterRules?: OnEnterRule[];
+  foldingRules?: FoldingRules;
   wordPattern?: RegExp;
   grammar?: string;
 }

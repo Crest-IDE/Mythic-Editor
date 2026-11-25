@@ -8,4 +8,6 @@ export * from './languageConfiguration';
 export * from './LanguageConfigurationRegistry';
 export * from './OnEnterSupport';
 export * from './BracketMatching';
+export * from './IndentGuides';
+export * from './IndentationGuesser';
 

@@ -19,6 +19,8 @@ export class Viewport {
   viewportHeight: number = 600;
   lineHeight: number = 21;
   charWidth: number = 8.4;
+  spaceWidth: number = 8.4;
+  tabSize: number = 4;
   gutterWidth: number = 68;
   overscanLines: number = 15;
 
@@ -27,9 +29,11 @@ export class Viewport {
   readonly lineDecorationsWidth: number = 26;
   readonly lineNumbersMinChars: number = 5; // lineNumbersMinChars default: 5
 
-  constructor(lineHeight: number = 21, charWidth: number = 8.4) {
+  constructor(lineHeight: number = 21, charWidth: number = 8.4, spaceWidth: number = charWidth, tabSize: number = 4) {
     this.lineHeight = lineHeight;
     this.charWidth = charWidth;
+    this.spaceWidth = spaceWidth;
+    this.tabSize = tabSize;
     this.gutterWidth = this.computeGutterWidth(1);
   }
 
@@ -118,7 +122,7 @@ export class Viewport {
    */
   getColumnLeft(column: number, lineContent?: string): number {
     if (lineContent !== undefined) {
-      const visibleCol = CursorColumns.visibleColumnFromColumn(lineContent, column);
+      const visibleCol = CursorColumns.visibleColumnFromColumn(lineContent, column, this.tabSize);
       return visibleCol * this.charWidth;
     }
     return (Math.max(1, column) - 1) * this.charWidth;
@@ -139,7 +143,7 @@ export class Viewport {
   getColumnAtX(x: number, lineLength: number, lineContent?: string): number {
     if (lineContent !== undefined) {
       const targetVisibleCol = Math.max(0, Math.round(x / this.charWidth));
-      return CursorColumns.columnFromVisibleColumn(lineContent, targetVisibleCol);
+      return CursorColumns.columnFromVisibleColumn(lineContent, targetVisibleCol, this.tabSize);
     }
     const rawCol = Math.round(x / this.charWidth) + 1;
     return Math.max(1, Math.min(rawCol, lineLength + 1));
