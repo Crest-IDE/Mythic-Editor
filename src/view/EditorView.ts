@@ -27,6 +27,7 @@ import { TextChange } from '../core/model/TextChange';
 import { CursorColumns } from '../core/model/CursorColumns';
 import { LanguageConfigurationRegistry } from '../core/language/LanguageConfigurationRegistry';
 import { OnEnterSupport } from '../core/language/OnEnterSupport';
+import { TouchSelectionController, IEditorTouchHost } from './TouchSelectionController';
 import './editor.css';
 
 export interface IEditorOptions {
@@ -46,13 +47,14 @@ export interface IEditorOptions {
   onSave?: (content: string) => void;
 }
 
-export class EditorView {
+export class EditorView implements IEditorTouchHost {
   readonly rootElement: HTMLElement;
-  private readonly scrollContainer: HTMLElement;
+  readonly scrollContainer: HTMLElement;
   private readonly canvas: HTMLElement;
   private readonly linesContent: HTMLElement;
+  readonly touchSelectionController: TouchSelectionController;
 
-  private buffer: ITextBuffer;
+  buffer: ITextBuffer;
   private viewport: Viewport;
   private metrics: IFontMetrics;
   private options: IEditorOptions;
@@ -160,8 +162,9 @@ export class EditorView {
     this.rootElement.appendChild(this.scrollContainer);
     targetElement.appendChild(this.rootElement);
 
-    // 5. Setup Listeners
+    // 5. Setup Listeners & Mobile Touch Controller
     this.bindEvents();
+    this.touchSelectionController = new TouchSelectionController(this);
 
     // 6. Initial Layout & Render
     this.maxLineWidth = this.computeMaxLineWidth();
@@ -351,6 +354,111 @@ export class EditorView {
     return this.selection;
   }
 
+  getPosition(): Position {
+    return this.selection.getPosition();
+  }
+
+  setPosition(pos: Position): void {
+    this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
+  }
+
+  getSelectedText(): string {
+    if (this.selection.isEmpty()) return '';
+    return this.buffer.getValueInRange(this.selection);
+  }
+
+  selectAll(): void {
+    const lineCount = this.buffer.getLineCount();
+    const lastLineLen = this.buffer.getLineLength(lineCount);
+    this.setSelection(new Selection(1, 1, lineCount, lastLineLen + 1));
+  }
+
+  getTargetAtClientPoint(clientX: number, clientY: number): { position: Position } {
+    const contentRect = this.linesContent.getBoundingClientRect();
+    const x = Math.max(0, clientX - contentRect.left);
+    const y = Math.max(0, clientY - contentRect.top);
+
+    const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
+    const lineLen = this.buffer.getLineLength(line);
+    const lineContent = this.buffer.getLineContent(line);
+
+    // Attempt browser DOM caret hit-testing for sub-pixel accuracy on emojis / variable-width chars
+    if (typeof document !== 'undefined') {
+      const lineEl = this.linesCollection.getLineElement(line);
+      if (lineEl) {
+        if (typeof (document as any).caretPositionFromPoint === 'function') {
+          const caret = (document as any).caretPositionFromPoint(clientX, clientY);
+          if (caret && caret.offsetNode && lineEl.contains(caret.offsetNode)) {
+            const col = this.linesCollection.getColumnFromNodeOffset(line, caret.offsetNode, caret.offset);
+            if (col !== null) {
+              return { position: new Position(line, col) };
+            }
+          }
+        } else if (typeof (document as any).caretRangeFromPoint === 'function') {
+          const range = (document as any).caretRangeFromPoint(clientX, clientY);
+          if (range && range.startContainer && lineEl.contains(range.startContainer)) {
+            const col = this.linesCollection.getColumnFromNodeOffset(line, range.startContainer, range.startOffset);
+            if (col !== null) {
+              return { position: new Position(line, col) };
+            }
+          }
+        }
+      }
+    }
+
+    const col = this.viewport.getColumnAtX(x, lineLen, lineContent);
+    return { position: new Position(line, col) };
+  }
+
+  getWordAtPosition(pos: Position): { startColumn: number; endColumn: number; word: string } | null {
+    const lineContent = this.buffer.getLineContent(pos.lineNumber);
+    if (!lineContent || lineContent.length === 0) return null;
+    const colIndex = Math.min(Math.max(0, pos.column - 1), lineContent.length);
+
+    const isWordChar = (ch: string) => /[a-zA-Z0-9_$]/.test(ch);
+
+    let targetIndex = colIndex;
+    if (targetIndex >= lineContent.length || !isWordChar(lineContent[targetIndex])) {
+      if (targetIndex > 0 && isWordChar(lineContent[targetIndex - 1])) {
+        targetIndex = targetIndex - 1;
+      } else {
+        return null;
+      }
+    }
+
+    let start = targetIndex;
+    while (start > 0 && isWordChar(lineContent[start - 1])) {
+      start--;
+    }
+    let end = targetIndex;
+    while (end < lineContent.length && isWordChar(lineContent[end])) {
+      end++;
+    }
+
+    if (start === end) return null;
+
+    return {
+      startColumn: start + 1,
+      endColumn: end + 1,
+      word: lineContent.slice(start, end)
+    };
+  }
+
+  getScrolledVisiblePosition(pos: Position): { top: number; left: number; height: number } | null {
+    const lineTop = this.viewport.getLineTop(pos.lineNumber);
+    const scrolledTop = lineTop - this.viewport.scrollTop;
+    const lineHeight = this.viewport.lineHeight;
+
+    const pixelLeft = this.getPixelOffsetForPosition(pos);
+    const scrolledLeft = this.viewport.gutterWidth + pixelLeft - this.viewport.scrollLeft;
+
+    return {
+      top: scrolledTop,
+      left: scrolledLeft,
+      height: lineHeight
+    };
+  }
+
   getPixelOffsetForPosition(pos: Position): number {
     const lineContent = this.buffer.getLineContent(pos.lineNumber);
     const measuredLeft = this.linesCollection.getHorizontalOffset(pos.lineNumber, pos.column);
@@ -377,6 +485,7 @@ export class EditorView {
     this.lineHighlight.update(pos.lineNumber, newSelection.isEmpty(), this.isFocused);
     this.updateIndentGuides(visible.startLineNumber, visible.endLineNumber);
     this.updateBracketMatch();
+    this.touchSelectionController?.scheduleUiUpdate();
   }
 
   typeText(text: string): void {
@@ -595,102 +704,26 @@ export class EditorView {
   }
 
   private bindEvents(): void {
-    let startX = 0;
-    let startY = 0;
-    let isScrolling = false;
-    let scrollResetTimer: any = null;
-
     // Scroll handling (virtualization trigger)
     this.scrollContainer.addEventListener('scroll', () => {
       this.viewport.scrollTop = this.scrollContainer.scrollTop;
       this.viewport.scrollLeft = this.scrollContainer.scrollLeft;
       this.render();
+      this.touchSelectionController?.scheduleUiUpdate();
     });
 
-    // Pointer events for click & selection drag
+    // Pointer events for desktop click & selection drag
     const getPosFromEvent = (clientX: number, clientY: number): Position => {
-      const contentRect = this.linesContent.getBoundingClientRect();
-      const x = Math.max(0, clientX - contentRect.left);
-      const y = Math.max(0, clientY - contentRect.top);
-
-      const line = this.viewport.getLineNumberAtY(y, this.buffer.getLineCount());
-      const lineLen = this.buffer.getLineLength(line);
-      const lineContent = this.buffer.getLineContent(line);
-
-      // Attempt browser DOM caret hit-testing for sub-pixel accuracy on emojis / variable-width chars
-      if (typeof document !== 'undefined') {
-        const lineEl = this.linesCollection.getLineElement(line);
-        if (lineEl) {
-          if (typeof (document as any).caretPositionFromPoint === 'function') {
-            const caret = (document as any).caretPositionFromPoint(clientX, clientY);
-            if (caret && caret.offsetNode && lineEl.contains(caret.offsetNode)) {
-              const col = this.linesCollection.getColumnFromNodeOffset(line, caret.offsetNode, caret.offset);
-              if (col !== null) {
-                return new Position(line, col);
-              }
-            }
-          } else if (typeof (document as any).caretRangeFromPoint === 'function') {
-            const range = (document as any).caretRangeFromPoint(clientX, clientY);
-            if (range && range.startContainer && lineEl.contains(range.startContainer)) {
-              const col = this.linesCollection.getColumnFromNodeOffset(line, range.startContainer, range.startOffset);
-              if (col !== null) {
-                return new Position(line, col);
-              }
-            }
-          }
-        }
-      }
-
-      const col = this.viewport.getColumnAtX(x, lineLen, lineContent);
-      return new Position(line, col);
+      return this.getTargetAtClientPoint(clientX, clientY).position;
     };
-
-    // Touch support (tap vs scroll discrimination matching Monaco)
-    this.rootElement.addEventListener('touchstart', (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        isScrolling = false;
-      }
-    }, { passive: true });
-
-    this.rootElement.addEventListener('touchmove', (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        const dx = Math.abs(touch.clientX - startX);
-        const dy = Math.abs(touch.clientY - startY);
-        if (dx > 8 || dy > 8 || e.touches.length > 1) {
-          isScrolling = true;
-          this.inputController.blur();
-          clearTimeout(scrollResetTimer);
-          scrollResetTimer = setTimeout(() => { isScrolling = false; }, 350);
-        }
-      }
-    }, { passive: true });
-
-    this.rootElement.addEventListener('touchend', (e: TouchEvent) => {
-      if (isScrolling) {
-        clearTimeout(scrollResetTimer);
-        scrollResetTimer = setTimeout(() => { isScrolling = false; }, 350);
-        return;
-      }
-      const touch = e.changedTouches && e.changedTouches[0];
-      if (touch) {
-        const dx = Math.abs(touch.clientX - startX);
-        const dy = Math.abs(touch.clientY - startY);
-        if (dx < 8 && dy < 8) {
-          const pos = getPosFromEvent(touch.clientX, touch.clientY);
-          this.selectionAnchor = pos;
-          this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
-          this.inputController.focus();
-        }
-      }
-    });
 
     // Mouse click & drag
     this.rootElement.addEventListener('mousedown', (e: MouseEvent) => {
       if (e.button !== 0) return;
+      const target = e.target as HTMLElement;
+      if (target?.closest?.('.selection-handle, .mythic-floating-toolbar, #floating-toolbar')) {
+        return;
+      }
       this.isPointerDown = true;
       const pos = getPosFromEvent(e.clientX, e.clientY);
       this.selectionAnchor = pos;
@@ -716,6 +749,10 @@ export class EditorView {
     });
 
     this.rootElement.addEventListener('click', (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.closest?.('.selection-handle, .mythic-floating-toolbar, #floating-toolbar')) {
+        return;
+      }
       this.editStack.pushStackElement();
       const pos = getPosFromEvent(e.clientX, e.clientY);
       this.setSelection(new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column));
@@ -1008,7 +1045,7 @@ export class EditorView {
     this.options.onDidChangeContent?.(this.buffer);
   }
 
-  private handleDeleteBackward(): void {
+  public handleDeleteBackward(): void {
     const beforeSelection = this.selection;
 
     if (!this.selection.isEmpty()) {

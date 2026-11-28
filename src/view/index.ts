@@ -14,4 +14,5 @@ export * from './ViewIndentGuides';
 export * from './RangeUtil';
 export * from './InputController';
 export * from './AutoClosingPairs';
+export * from './TouchSelectionController';
 export * from './EditorView';

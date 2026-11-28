@@ -45,8 +45,9 @@
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 14px;
   line-height: 1;
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 .mythic-scroll-container {
@@ -104,7 +105,8 @@
   top: 0;
   right: 0;
   height: 100%;
-  user-select: text;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 /* Current Line Highlight (VS Code active line highlight overlay) */
@@ -115,7 +117,7 @@
   min-width: 100%;
   background-color: var(--mythic-line-highlight-bg, #2c313a);
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
   box-sizing: border-box;
   will-change: transform;
 }
@@ -163,9 +165,11 @@
   white-space: pre;
   tab-size: var(--mythic-tab-size, 4);
   z-index: 2;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
-/* Selection Layer */
+/* Selection Layer (Rendered UNDER view lines so text syntax colors remain completely visible) */
 .mythic-selection-layer {
   position: absolute;
   left: 0;
@@ -173,7 +177,7 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 3;
+  z-index: 1;
 }
 
 .mythic-selection-rect {
@@ -273,4 +277,99 @@
   color: var(--mythic-bracket-unexpected, #ff1212db) !important;
   font-weight: 600;
 }
+
+/* Touch Selection Handles - Android Native Teardrop / Water Droplet */
+.selection-handle {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: var(--mythic-handle-color, #38bdf8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+/* Left / Start handle: droplet curves down-left, sharp tip points up-right at caret */
+.selection-handle.handle-start {
+  border-radius: 50% 0 50% 50%;
+}
+
+/* Right / End handle: droplet curves down-right, sharp tip points up-left at caret */
+.selection-handle.handle-end {
+  border-radius: 0 50% 50% 50%;
+}
+
+/* Edge-flipping: reverses droplet direction when too close to viewport screen boundaries */
+.selection-handle.handle-start.flipped {
+  border-radius: 0 50% 50% 50%;
+}
+
+.selection-handle.handle-end.flipped {
+  border-radius: 50% 0 50% 50%;
+}
+
+.selection-handle::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.001);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.selection-handle.visible {
+  display: block;
+}
+
+/* Dynamic Floating Action Menu */
+.mythic-floating-toolbar {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2000;
+  padding: 3px;
+  border: 1px solid var(--mythic-toolbar-border, #334155);
+  border-radius: 6px;
+  background: var(--mythic-toolbar-bg, #1e293b);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  touch-action: manipulation;
+  will-change: transform;
+  gap: 4px;
+}
+
+.mythic-floating-toolbar.visible {
+  display: flex;
+}
+
+.mythic-floating-toolbar button {
+  padding: 5px 10px;
+  border: 1px solid var(--mythic-toolbar-btn-border, #334155);
+  border-radius: 4px;
+  background: var(--mythic-toolbar-btn-bg, #0f172a);
+  color: var(--mythic-toolbar-btn-fg, #ffffff);
+  font: 12px sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  outline: none;
+}
+
+.mythic-floating-toolbar button:active {
+  background: var(--mythic-toolbar-btn-active-bg, #334155);
+}
+
 
